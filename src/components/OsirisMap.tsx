@@ -16,6 +16,8 @@ interface OsirisMapProps {
   mapStyle?: string;
   sweepData?: any;
   scanTargets?: any[];
+  onDistrictClick?: (district: any) => void;
+  activeRegistrationLayer?: string;
 }
 
 function computeSolarTerminator(): [number, number][] {
@@ -40,7 +42,7 @@ function computeSolarTerminator(): [number, number][] {
 
 const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] };
 
-function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightClick, onViewStateChange, flyToLocation, projection = 'globe', mapStyle = 'dark', sweepData, scanTargets = [] }: OsirisMapProps) {
+function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightClick, onViewStateChange, flyToLocation, projection = 'globe', mapStyle = 'dark', sweepData, scanTargets = [], onDistrictClick, activeRegistrationLayer = 'nid' }: OsirisMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -87,8 +89,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-      center: [25.48, 42.70], zoom: 6.5, minZoom: 1.5, maxZoom: 18,
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      center: [32.2903, 1.3733], zoom: 6.2, minZoom: 1.5, maxZoom: 18,
       attributionControl: false,
       maxPitch: 85,
     });
@@ -111,6 +113,180 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       // Sources
       const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','gps-jamming','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','sigint-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets'];
       sources.forEach(s => map.addSource(s, { type: 'geojson', data: EMPTY_FC }));
+
+      // ── NIRA UGANDA SOURCES ──
+      map.addSource('nira-districts', { type: 'geojson', data: EMPTY_FC });
+      map.addSource('nira-centres', { type: 'geojson', data: EMPTY_FC });
+      map.addSource('nira-disease-alerts', { type: 'geojson', data: EMPTY_FC });
+      map.addSource('nira-refugee-zones', { type: 'geojson', data: EMPTY_FC });
+
+      // ── NIRA District glow rings ──
+      map.addLayer({
+        id: 'nira-district-glow',
+        type: 'circle',
+        source: 'nira-districts',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 18, 6, 30, 8, 50],
+          'circle-color': ['get', 'circle_color'],
+          'circle-opacity': 0.08,
+          'circle-blur': 1,
+        },
+      });
+
+      // ── NIRA District main circles ──
+      map.addLayer({
+        id: 'nira-district-circles',
+        type: 'circle',
+        source: 'nira-districts',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 8, 6, 14, 8, 22],
+          'circle-color': ['get', 'circle_color'],
+          'circle-opacity': 0.85,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-opacity': 0.7,
+        },
+      });
+
+      // ── NIRA District labels (zoom 6+) ──
+      map.addLayer({
+        id: 'nira-district-labels',
+        type: 'symbol',
+        source: 'nira-districts',
+        minzoom: 6,
+        layout: {
+          'text-field': ['concat', ['get', 'name'], '\n', ['get', 'coverage_display']],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 6, 9, 8, 11],
+          'text-font': ['Open Sans Bold'],
+          'text-offset': [0, 2],
+          'text-max-width': 10,
+          'text-allow-overlap': false,
+        },
+        paint: {
+          'text-color': ['get', 'text_color'],
+          'text-halo-color': '#FFFFFF',
+          'text-halo-width': 1.5,
+          'text-opacity': 0.9,
+        },
+      });
+
+      // ── NIRA Registration Centres ──
+      map.addLayer({
+        id: 'nira-centres-glow',
+        type: 'circle',
+        source: 'nira-centres',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 10, 8, 18],
+          'circle-color': '#1E6B3C',
+          'circle-opacity': 0.1,
+          'circle-blur': 1,
+        },
+      });
+      map.addLayer({
+        id: 'nira-centres-dots',
+        type: 'circle',
+        source: 'nira-centres',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 5, 8, 9],
+          'circle-color': '#1E6B3C',
+          'circle-opacity': 0.9,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-opacity': 0.8,
+        },
+      });
+
+      // ── NIRA Disease Alerts ──
+      map.addLayer({
+        id: 'nira-disease-glow',
+        type: 'circle',
+        source: 'nira-disease-alerts',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 18, 6, 28, 8, 40],
+          'circle-color': '#D97706',
+          'circle-opacity': 0.12,
+          'circle-blur': 1,
+        },
+      });
+      map.addLayer({
+        id: 'nira-disease-dots',
+        type: 'circle',
+        source: 'nira-disease-alerts',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 9, 6, 14, 8, 20],
+          'circle-color': '#D97706',
+          'circle-opacity': 0.9,
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-opacity': 0.8,
+        },
+      });
+      map.addLayer({
+        id: 'nira-disease-labels',
+        type: 'symbol',
+        source: 'nira-disease-alerts',
+        minzoom: 5,
+        layout: {
+          'text-field': ['concat', '⚕ ', ['get', 'title']],
+          'text-size': 9,
+          'text-font': ['Open Sans Bold'],
+          'text-offset': [0, 2.2],
+          'text-max-width': 14,
+          'text-allow-overlap': false,
+        },
+        paint: {
+          'text-color': '#92400E',
+          'text-halo-color': '#FFFFFF',
+          'text-halo-width': 2,
+          'text-opacity': 0.95,
+        },
+      });
+
+      // ── NIRA Refugee Settlements ──
+      map.addLayer({
+        id: 'nira-refugee-glow',
+        type: 'circle',
+        source: 'nira-refugee-zones',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 20, 6, 32, 8, 50],
+          'circle-color': '#9333EA',
+          'circle-opacity': 0.1,
+          'circle-blur': 1,
+        },
+      });
+      map.addLayer({
+        id: 'nira-refugee-dots',
+        type: 'circle',
+        source: 'nira-refugee-zones',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 10, 6, 16, 8, 22],
+          'circle-color': '#9333EA',
+          'circle-opacity': 0.85,
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-opacity': 0.8,
+        },
+      });
+      map.addLayer({
+        id: 'nira-refugee-labels',
+        type: 'symbol',
+        source: 'nira-refugee-zones',
+        minzoom: 5,
+        layout: {
+          'text-field': ['concat', ['get', 'name'], '\n', ['get', 'population_display']],
+          'text-size': 9,
+          'text-font': ['Open Sans Bold'],
+          'text-offset': [0, 2.5],
+          'text-max-width': 12,
+          'text-allow-overlap': false,
+        },
+        paint: {
+          'text-color': '#6B21A8',
+          'text-halo-color': '#FFFFFF',
+          'text-halo-width': 2,
+          'text-opacity': 0.95,
+        },
+      });
 
       // ── CONFLICT ZONES — small warning markers (not polygons) ──
       // Create warning triangle icon
@@ -762,6 +938,91 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       });
     });
 
+    // ── NIRA District click → open intel panel ──
+    map.on('click', 'nira-district-circles', (e: any) => {
+      if (!e.features?.length) return;
+      const props = e.features[0].properties as any;
+      try {
+        const district = JSON.parse(props.district_json || '{}');
+        onDistrictClick?.(district);
+      } catch (_) {}
+    });
+
+    // ── NIRA District hover ──
+    map.on('mouseenter', 'nira-district-circles', (e: any) => {
+      map.getCanvas().style.cursor = 'pointer';
+      if (!e.features?.length) return;
+      const props = e.features[0].properties as any;
+      popupRef.current?.remove();
+      const status = props.status || 'needs_attention';
+      const statusColor = status === 'critical' ? '#DC2626' : status === 'on_track' ? '#16A34A' : '#D97706';
+      popupRef.current = new maplibregl.Popup({ closeButton: false, maxWidth: '220px', offset: 12 })
+        .setLngLat((e.features[0].geometry as any).coordinates)
+        .setHTML(`<div class="nira-popup">
+          <div class="nira-popup-name">${props.name} District</div>
+          <div class="nira-popup-region">${props.region} · ${props.subregion || ''}</div>
+          <div class="nira-popup-metric"><span class="nira-popup-metric-label">NID Coverage</span><span class="nira-popup-metric-value" style="color:${statusColor}">${props.nid_coverage_pct}%</span></div>
+          <div class="nira-popup-metric"><span class="nira-popup-metric-label">Birth Reg.</span><span class="nira-popup-metric-value">${props.birth_registration_pct}%</span></div>
+          <div class="nira-popup-metric"><span class="nira-popup-metric-label">Population</span><span class="nira-popup-metric-value">${Number(props.population).toLocaleString()}</span></div>
+          <div class="nira-popup-hint">Click for full district intel →</div>
+        </div>`)
+        .addTo(map);
+    });
+
+    map.on('mouseleave', 'nira-district-circles', () => {
+      map.getCanvas().style.cursor = '';
+      popupRef.current?.remove();
+      popupRef.current = null;
+    });
+
+    map.on('mouseenter', 'nira-centres-dots', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'nira-centres-dots', () => { map.getCanvas().style.cursor = ''; });
+
+    // ── Disease Alert click popup ──
+    map.on('click', 'nira-disease-dots', (e: any) => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const popupStyle = `background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);border-radius:10px;padding:14px;font-family:'JetBrains Mono',monospace;border:1px solid rgba(217,119,6,0.4);`;
+      popupRef.current?.remove();
+      popupRef.current = new maplibregl.Popup({ closeButton: true, maxWidth: '280px', offset: 14 })
+        .setLngLat(coords)
+        .setHTML(`<div style="${popupStyle}">
+          <div style="color:#D97706;font-size:13px;font-weight:700;margin-bottom:4px;">⚕ WHO AFRO ALERT</div>
+          <div style="color:#1E293B;font-size:11px;font-weight:600;margin-bottom:6px;">${p.title}</div>
+          <div style="color:#64748B;font-size:9px;margin-bottom:4px;">${p.district} · ${p.region} Region</div>
+          <div style="color:#475569;font-size:9px;line-height:1.5;">${p.summary || ''}</div>
+          <div style="color:#D97706;font-size:8px;margin-top:6px;">Source: ${p.source || 'WHO AFRO Uganda'}</div>
+        </div>`)
+        .addTo(map);
+    });
+    map.on('mouseenter', 'nira-disease-dots', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'nira-disease-dots', () => { map.getCanvas().style.cursor = ''; });
+
+    // ── Refugee Settlement click popup ──
+    map.on('click', 'nira-refugee-dots', (e: any) => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties as any;
+      const coords = (e.features[0].geometry as any).coordinates;
+      const popupStyle = `background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);border-radius:10px;padding:14px;font-family:'JetBrains Mono',monospace;border:1px solid rgba(147,51,234,0.4);`;
+      popupRef.current?.remove();
+      popupRef.current = new maplibregl.Popup({ closeButton: true, maxWidth: '280px', offset: 14 })
+        .setLngLat(coords)
+        .setHTML(`<div style="${popupStyle}">
+          <div style="color:#9333EA;font-size:13px;font-weight:700;margin-bottom:4px;">🏕 UNHCR SETTLEMENT</div>
+          <div style="color:#1E293B;font-size:12px;font-weight:700;margin-bottom:4px;">${p.name}</div>
+          <div style="color:#64748B;font-size:9px;margin-bottom:6px;">${p.district} District · ${p.region}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;">
+            <div><span style="color:#94A3B8;">POPULATION</span><br/><span style="color:#9333EA;font-weight:bold;">${p.population_display}</span></div>
+            <div><span style="color:#94A3B8;">ORIGIN</span><br/><span style="color:#475569;">${p.origin}</span></div>
+          </div>
+          <div style="color:#7C3AED;font-size:8px;margin-top:8px;">⚠ Registration gap: refugees often lack NIRA documentation</div>
+        </div>`)
+        .addTo(map);
+    });
+    map.on('mouseenter', 'nira-refugee-dots', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'nira-refugee-dots', () => { map.getCanvas().style.cursor = ''; });
+
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
@@ -791,6 +1052,137 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     if (!map) return;
     ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none'); });
   }, []);
+
+  // ── NIRA Districts → map circles ──
+  useEffect(() => {
+    if (!mapReady) return;
+
+    const LAYER_FIELD: Record<string, string> = {
+      nid: 'nid_coverage_pct',
+      birth: 'birth_registration_pct',
+      death: 'death_registration_pct',
+      marriage: 'marriage_registration_pct',
+    };
+    const field = LAYER_FIELD[activeRegistrationLayer] || 'nid_coverage_pct';
+
+    const coverageActive = (activeLayers as any).nid_coverage ||
+      (activeLayers as any).birth_reg ||
+      (activeLayers as any).death_reg ||
+      (activeLayers as any).marriage_reg;
+
+    if (!coverageActive || !data.nira_districts) {
+      setGeo('nira-districts', []);
+      return;
+    }
+
+    function coverageColor(pct: number): string {
+      if (pct < 20) return '#7f1d1d';
+      if (pct < 30) return '#dc2626';
+      if (pct < 40) return '#f97316';
+      if (pct < 55) return '#eab308';
+      if (pct < 70) return '#22c55e';
+      return '#15803d';
+    }
+
+    function textColor(pct: number): string {
+      if (pct < 40) return '#991B1B';
+      if (pct < 70) return '#92400E';
+      return '#166534';
+    }
+
+    const features = data.nira_districts.map((d: any) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [d.lon, d.lat] },
+      properties: {
+        name: d.name,
+        region: d.region,
+        subregion: d.subregion,
+        population: d.population,
+        nid_coverage_pct: d.nid_coverage_pct,
+        birth_registration_pct: d.birth_registration_pct,
+        death_registration_pct: d.death_registration_pct,
+        marriage_registration_pct: d.marriage_registration_pct,
+        registration_centres: d.registration_centres,
+        status: d.status,
+        trend: d.trend,
+        mobile_teams_needed: d.mobile_teams_needed,
+        last_drive: d.last_drive,
+        notes: d.notes,
+        coverage_value: d[field],
+        coverage_display: `${Number(d[field]).toFixed(0)}%`,
+        circle_color: coverageColor(d[field]),
+        text_color: textColor(d[field]),
+        district_json: JSON.stringify(d),
+      },
+    }));
+
+    setGeo('nira-districts', features);
+  }, [mapReady, data.nira_districts, activeLayers, activeRegistrationLayer, setGeo]);
+
+  // ── NIRA Centres visibility ──
+  useEffect(() => {
+    if (!mapReady) return;
+    if (!(activeLayers as any).centres || !data.nira_districts) {
+      setGeo('nira-centres', []);
+      return;
+    }
+    const features = data.nira_districts.map((d: any) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [d.lon, d.lat] },
+      properties: { name: d.name, centres: d.registration_centres },
+    }));
+    setGeo('nira-centres', features);
+  }, [mapReady, data.nira_districts, activeLayers, setGeo]);
+
+  // ── NIRA Disease Alerts → map markers ──
+  useEffect(() => {
+    if (!mapReady) return;
+    const alerts = (data.nira_alerts || []).filter((a: any) => a.category === 'disease_outbreak');
+    if (!(activeLayers as any).disease_alerts || !alerts.length) {
+      setGeo('nira-disease-alerts', []);
+      return;
+    }
+    const features = alerts.map((a: any) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [a.lon, a.lat] },
+      properties: { title: a.title, district: a.district, region: a.region, summary: a.summary, source: a.source },
+    }));
+    setGeo('nira-disease-alerts', features);
+  }, [mapReady, data.nira_alerts, activeLayers, setGeo]);
+
+  // ── NIRA Refugee Settlements → map markers ──
+  const UNHCR_SETTLEMENTS = [
+    { name: 'Bidi Bidi', district: 'Yumbe', region: 'Northern', lat: 3.3667, lon: 31.2167, population: 240000, origin: 'South Sudan' },
+    { name: 'Rhino Camp', district: 'Madi Okollo', region: 'Northern', lat: 2.9667, lon: 31.25, population: 130000, origin: 'South Sudan' },
+    { name: 'Nakivale', district: 'Isingiro', region: 'Western', lat: -0.9462, lon: 30.9198, population: 140000, origin: 'DRC / Burundi' },
+    { name: 'Kyangwali', district: 'Kikuube', region: 'Western', lat: 1.6167, lon: 30.8167, population: 100000, origin: 'DRC' },
+    { name: 'Rwamwanja', district: 'Kamwenge', region: 'Western', lat: 0.6333, lon: 30.4333, population: 90000, origin: 'DRC' },
+    { name: 'Kyaka II', district: 'Kyegegwa', region: 'Western', lat: -0.1, lon: 30.2, population: 80000, origin: 'DRC / Burundi' },
+    { name: 'Palabek', district: 'Lamwo', region: 'Northern', lat: 3.4, lon: 32.4, population: 60000, origin: 'South Sudan' },
+    { name: 'Imvepi', district: 'Terego', region: 'Northern', lat: 2.9167, lon: 31.5, population: 70000, origin: 'South Sudan' },
+    { name: 'Lobule', district: 'Koboko', region: 'Northern', lat: 3.4, lon: 31.6, population: 20000, origin: 'South Sudan' },
+  ];
+
+  useEffect(() => {
+    if (!mapReady) return;
+    if (!(activeLayers as any).refugee_zones) {
+      setGeo('nira-refugee-zones', []);
+      return;
+    }
+    const features = UNHCR_SETTLEMENTS.map(s => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
+      properties: {
+        name: s.name,
+        district: s.district,
+        region: s.region,
+        population: s.population,
+        population_display: `${(s.population / 1000).toFixed(0)}K refugees`,
+        origin: s.origin,
+      },
+    }));
+    setGeo('nira-refugee-zones', features);
+  }, [mapReady, activeLayers, setGeo]);
 
   // Flight data → GeoJSON (GPU rendered)
   useEffect(() => {
@@ -933,6 +1325,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
     setVis(['balloon-dots','balloon-label'], activeLayers.balloons);
     setVis(['rad-glow','rad-dots','rad-label'], activeLayers.radiation);
+    setVis(['nira-disease-glow','nira-disease-dots','nira-disease-labels'], !!(activeLayers as any).disease_alerts);
+    setVis(['nira-refugee-glow','nira-refugee-dots','nira-refugee-labels'], !!(activeLayers as any).refugee_zones);
     // Sweep layers always visible when data is present (controlled by useEffect)
     setVis(['sweep-connections','sweep-pulse-ring','sweep-device-glow','sweep-device-dots','sweep-device-labels'], true);
   }, [mapReady, activeLayers, setVis]);
@@ -1072,7 +1466,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
             tileSize: 256,
             maxzoom: 18,
           });
-          map.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite-tiles', paint: { 'raster-opacity': 0.85 } }, 'day-night-fill');
+          // Insert satellite BEFORE nira-district-glow so all NIRA layers render on top
+          map.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite-tiles', paint: { 'raster-opacity': 0.85 } }, 'nira-district-glow');
         } else {
           map.setLayoutProperty('satellite-layer', 'visibility', 'visible');
         }

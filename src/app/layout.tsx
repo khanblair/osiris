@@ -1,17 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const SITE_URL = "https://osirisai.live";
-const SITE_NAME = "OSIRIS";
-const SITE_TITLE = "OSIRIS — Open Source Intelligence Platform | Live Flight Tracking, CCTV, OSINT Tools & More";
-const SITE_DESCRIPTION = "The open-source Palantir alternative. Track 10,000+ aircraft, 2,000 satellites, and worldwide CCTV cameras in real-time on a 3D globe. Run Nmap scans, DNS lookups, WHOIS queries, SSL cert analysis & threat intelligence — all from your browser. 20+ live data feeds including earthquakes, wildfires, nuclear facilities, cyber threats, and global conflicts. Free & open source.";
+const SITE_URL = "https://nira-intel.vercel.app";
+const SITE_NAME = "NIRA-INTEL";
+const SITE_TITLE = "NIRA-INTEL — Uganda Civil Registration Intelligence Dashboard";
+const SITE_DESCRIPTION = "Uganda Civil Registration Intelligence Platform for NIRA. Monitor NID coverage, birth, death and marriage registration rates across all 57 districts. Identify underserved communities, prioritise mobile registration drives, and track CRVS performance in real-time.";
 
 export const viewport: Viewport = {
-  themeColor: "#D4AF37",
+  themeColor: "#1B3A6B",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  colorScheme: "dark",
+  colorScheme: "light",
 };
 
 export const metadata: Metadata = {
@@ -22,40 +22,16 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   keywords: [
-    // OSINT Tools - Primary focus
-    "OSINT tools", "free OSINT tools", "online OSINT toolkit", "OSINT framework",
-    "nmap online", "nmap scanner online", "free nmap scan", "port scanner online",
-    "DNS lookup tool", "WHOIS lookup", "reverse DNS", "DNS records",
-    "SSL certificate checker", "certificate transparency", "cert lookup",
-    "BGP routing lookup", "ASN lookup", "IP geolocation",
-    "threat intelligence", "threat intel lookup", "IP reputation check",
-    "network reconnaissance", "recon tools", "penetration testing tools",
-    "cybersecurity tools", "infosec tools", "security scanner",
-    "linux OSINT tools", "kali linux tools online", "OSINT browser tools",
-    
-    // Intelligence Platform
-    "OSINT", "open source intelligence", "intelligence platform", "global intelligence",
-    "geospatial intelligence", "GEOINT", "SIGINT", "real-time tracking",
-    "palantir alternative", "open source palantir", "intelligence dashboard",
-    
-    // Tracking & Data
-    "flight tracker", "aircraft tracking", "ADS-B tracker", "live flight radar",
-    "satellite tracking", "ISS tracker", "space station tracker",
-    "CCTV cameras live", "security cameras worldwide", "live cameras",
-    "earthquake monitor", "seismic activity", "USGS earthquake",
-    "wildfire tracker", "NASA FIRMS", "active fires",
-    "nuclear facilities map", "nuclear power plants",
-    "severe weather alerts", "weather radar",
-    "cyber threats dashboard", "CVE tracker",
-    "space weather", "solar storm", "GPS jamming",
-    "defense stocks", "commodities tracker",
-    
-    // Brand
-    "osiris", "osirisai", "osirisai.live",
+    "NIRA Uganda", "civil registration Uganda", "CRVS Uganda",
+    "NID coverage", "birth registration Uganda", "death registration",
+    "marriage registration", "Uganda districts", "registration intelligence",
+    "NIRA dashboard", "Uganda government", "Ministry of ICT Uganda",
+    "civil registration intelligence", "geospatial dashboard Uganda",
+    "district coverage map", "mobile registration teams",
   ],
-  authors: [{ name: "Osiris Project", url: SITE_URL }],
-  creator: "Osiris Project",
-  publisher: "Osiris Project",
+  authors: [{ name: "NIRA-INTEL Project", url: SITE_URL }],
+  creator: "NIRA-INTEL",
+  publisher: "NIRA-INTEL",
   robots: {
     index: true,
     follow: true,
@@ -90,28 +66,28 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   openGraph: {
-    title: "OSIRIS — The Open-Source Palantir Alternative | Live Flights, CCTV, Satellites & OSINT Tools",
-    description: "Track 10K+ aircraft, 2K satellites & worldwide CCTV on a 3D globe. Run Nmap, DNS, WHOIS & threat intel scans from your browser. 20+ live intelligence feeds. Free. Open source.",
+    title: "NIRA-INTEL — Uganda Civil Registration Intelligence Dashboard",
+    description: "Monitor NID coverage, birth, death and marriage registration across 57 Uganda districts. Real-time CRVS intelligence for NIRA Uganda.",
     type: "website",
     siteName: SITE_NAME,
-    locale: "en_US",
+    locale: "en_UG",
     url: SITE_URL,
     images: [
       {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "OSIRIS — Open Source Intelligence Platform with Live Tracking & OSINT Tools",
+        alt: "NIRA-INTEL Uganda Civil Registration Intelligence Dashboard",
         type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "🛰️ OSIRIS — Open Source Palantir Alternative | Live Tracking + OSINT Tools",
-    description: "Track 10K+ flights, satellites & CCTV worldwide. Run Nmap, DNS, WHOIS scans from your browser. 20+ live intel feeds. Free & open source.",
-    creator: "@simplifaisoul",
-    site: "@simplifaisoul",
+    title: "NIRA-INTEL — Uganda Civil Registration Intelligence",
+    description: "Monitor NID coverage and birth/death/marriage registration across 57 Uganda districts. Real-time CRVS dashboard for NIRA Uganda.",
+    creator: "@NIRAUganda",
+    site: "@NIRAUganda",
     images: [`${SITE_URL}/og-image.png`],
   },
   category: "technology",
@@ -119,9 +95,9 @@ export const metadata: Metadata = {
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "apple-mobile-web-app-title": "OSIRIS",
+    "apple-mobile-web-app-title": "NIRA-INTEL",
     "mobile-web-app-capable": "yes",
-    "msapplication-TileColor": "#06060C",
+    "msapplication-TileColor": "#1B3A6B",
     "msapplication-config": "none",
   },
 };
@@ -130,46 +106,38 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "OSIRIS — OSINT Toolkit & Intelligence Platform",
-  alternateName: ["OSIRIS", "OsirisAI", "Osiris OSINT"],
+  name: "NIRA-INTEL — Uganda Civil Registration Intelligence",
+  alternateName: ["NIRA-INTEL", "NIRA Dashboard", "Uganda CRVS Dashboard"],
   url: SITE_URL,
   description: SITE_DESCRIPTION,
-  applicationCategory: "SecurityApplication",
+  applicationCategory: "GovernmentApplication",
   operatingSystem: "Web",
   browserRequirements: "Requires a modern web browser",
   offers: {
     "@type": "Offer",
     price: "0",
-    priceCurrency: "USD",
+    priceCurrency: "UGX",
     availability: "https://schema.org/InStock",
   },
   featureList: [
-    "Nmap port scanning from the browser — no install required",
-    "DNS record lookup (A, AAAA, MX, NS, TXT, CNAME)",
-    "WHOIS domain registration lookup",
-    "SSL/TLS certificate transparency search",
-    "BGP routing & ASN lookup",
-    "IP geolocation & threat intelligence",
-    "Real-time flight tracking (10,000+ aircraft via ADS-B)",
-    "Satellite tracking (2,000+ objects including ISS)",
-    "Worldwide CCTV camera monitoring (1,400+ feeds)",
-    "Earthquake monitoring (USGS live feed)",
-    "Wildfire detection (NASA FIRMS satellite data)",
-    "Nuclear facility mapping (worldwide)",
-    "Severe weather alerts & tracking",
-    "Cyber threat & CVE intelligence",
-    "Space weather & solar storm monitoring",
-    "GPS jamming detection",
-    "Defense & commodity market tracking",
-    "SIGINT news aggregation feed",
-    "Interactive 3D globe with day/night cycle",
-    "Region intelligence dossier reports",
+    "NID coverage map across 57 Uganda districts",
+    "Birth registration rate by district",
+    "Death registration completeness tracking",
+    "Marriage registration rate monitoring",
+    "Priority ranking for mobile registration drive deployment",
+    "WHO AFRO disease outbreak alerts affecting registration",
+    "UNHCR refugee settlement mapping",
+    "District-level intel panel with trend analysis",
+    "NIRA alerts feed (critical, warning, info)",
+    "Registration centre locations",
+    "Interactive CartoDB Positron map",
+    "Coverage scale: red (0%) to green (100%)",
   ],
   screenshot: `${SITE_URL}/og-image.png`,
   author: {
     "@type": "Organization",
-    name: "Osiris Project",
-    url: SITE_URL,
+    name: "NIRA Uganda",
+    url: "https://nira.go.ug",
   },
 };
 
@@ -200,7 +168,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ErrorBoundary name="OSIRIS Core">
+        <ErrorBoundary name="NIRA-INTEL Core">
           {children}
         </ErrorBoundary>
         <Analytics />

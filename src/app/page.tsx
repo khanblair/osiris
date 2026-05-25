@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, BarChart3, Newspaper, Search, Share2, Map as MapIcon, X, Globe, MapPinned, Radar, Satellite, Moon, ExternalLink, AlertTriangle, Building2, RadioTower, Activity, Shield, Database, Wifi } from 'lucide-react';
+import { Layers, BarChart3, Newspaper, Search, X, Globe, MapPinned, Radar, Satellite, Moon, ExternalLink, AlertTriangle, Activity, Users, CreditCard } from 'lucide-react';
+import DistrictIntelPanel from '@/components/DistrictIntelPanel';
 import IntelFeed from '@/components/IntelFeed';
-import MarketsPanel from '@/components/MarketsPanel';
 import SearchBar from '@/components/SearchBar';
 import ScaleBar from '@/components/ScaleBar';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -18,7 +18,6 @@ import LiveAlerts from '@/components/LiveAlerts';
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
 const LayerPanel = dynamic(() => import('@/components/LayerPanel'));
 const CameraViewer = dynamic(() => import('@/components/CameraViewer'));
-const OsintPanel = dynamic(() => import('@/components/OsintPanel'));
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -52,33 +51,10 @@ const UptimeClock = () => {
   return <span className="hidden lg:inline">UPTIME: <span className="text-[var(--gold-primary)]">{uptime}</span></span>;
 };
 
-const ZuluClock = () => {
-  const [time, setTime] = useState('');
-  useEffect(() => {
-    const iv = setInterval(() => {
-      const now = new Date();
-      setTime(`ZULU ${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}:${String(now.getUTCSeconds()).padStart(2,'0')}Z`);
-    }, 1000);
-    return () => clearInterval(iv);
-  }, []);
-  return <span className="text-[var(--cyan-primary)] font-bold tabular-nums">{time || 'ZULU --:--:--Z'}</span>;
-};
-
-const DataThroughput = () => {
-  const [throughput, setThroughput] = useState('0.0');
-  useEffect(() => {
-    const iv = setInterval(() => {
-      // Simulated realistic data throughput between 1.2 and 4.8 MB/s
-      setThroughput((1.2 + Math.random() * 3.6).toFixed(1));
-    }, 2500);
-    return () => clearInterval(iv);
-  }, []);
-  return <span className="text-[var(--alert-green)] font-bold tabular-nums">{throughput} MB/s</span>;
-};
 
 export default function Dashboard() {
   const dataRef = useRef<any>({});
-  const [dataVersion, setDataVersion] = useState(0);
+  const [, setDataVersion] = useState(0);
   const data = dataRef.current;
 
   const [backendStatus, setBackendStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
@@ -100,34 +76,31 @@ export default function Dashboard() {
   const [mapStyle, setMapStyle] = useState<'dark'|'satellite'>('dark');
   const [sweepData, setSweepData] = useState<any>(null);
   const [scanTargets, setScanTargets] = useState<any[]>([]);
+  const [selectedDistrict, setSelectedDistrict] = useState<any>(null);
+  const [activeRegistrationLayer, setActiveRegistrationLayer] = useState<string>('nid');
+  const [niraStats, setNiraStats] = useState<any>(null);
 
   const isMobile = useIsMobile();
-  const startTime = useRef(Date.now());
   const geocodeCache = useRef<Map<string, string>>(new Map());
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastGeocodedPos = useRef<{ lat: number; lng: number } | null>(null);
 
-  // ── DEFAULT: Most layers OFF — fast initial load ──
+  // ── NIRA-INTEL Layers ──
   const [activeLayers, setActiveLayers] = useState({
-    flights: false,
-    private: false,
-    jets: false,
-    military: false,
-    maritime: true,
-    satellites: false,
-    balloons: false,
-    cctv: true,
-    live_news: true,
-    news_intel: true,
-    earthquakes: true,
-    fires: false,
-    weather: false,
-    radiation: false,
-    infrastructure: false,
-    global_incidents: true,
-    war_alerts: false,
-    gps_jamming: false,
-    day_night: true,
+    nid_coverage: true,
+    birth_reg: false,
+    death_reg: false,
+    marriage_reg: false,
+    centres: true,
+    disease_alerts: false,
+    refugee_zones: false,
+    // Keep some Osiris layers as unused (map still expects them but we don't fetch)
+    flights: false, private: false, jets: false, military: false,
+    maritime: false, satellites: false, balloons: false,
+    cctv: false, live_news: false, news_intel: false,
+    earthquakes: false, fires: false, weather: false,
+    radiation: false, infrastructure: false,
+    global_incidents: false, war_alerts: false, gps_jamming: false, day_night: false,
   });
   const [liveFeedUrl, setLiveFeedUrl] = useState<string | null>(null);
   const [liveFeedName, setLiveFeedName] = useState('');
@@ -260,126 +233,69 @@ export default function Dashboard() {
     }
   }, []);
 
-  // ── PROGRESSIVE DATA LOADING (request-optimized) ──
+  // ── NIRA DATA LOADING ──
   useEffect(() => {
-    // Priority 1: Core feeds (always needed for panels)
-    fetchEndpoint('/api/earthquakes');
-    fetchEndpoint('/api/news');
-    const marketTimer = setTimeout(() => fetchEndpoint('/api/markets', d => ({ markets: d })), 800);
-
-    // Priority 2: Space Weather (needed for MarketsPanel)
-    const spaceTimer = setTimeout(async () => {
+    // Load registration coverage data
+    const loadRegistration = async (layer = 'nid') => {
       try {
-        const r = await fetch('/api/space-weather');
-        if (r.ok) setSpaceWeather(await r.json());
-      } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
-    }, 5000);
+        const res = await fetch(`/api/registration?layer=${layer}`);
+        if (res.ok) {
+          const json = await res.json();
+          dataRef.current = {
+            ...dataRef.current,
+            nira_districts: json.districts,
+            nira_summary: json.summary,
+            nira_priorities: json.priorities,
+          };
+          setNiraStats(json.summary);
+          setDataVersion(v => v + 1);
+          setBackendStatus('connected');
+        }
+      } catch (e) {
+        console.warn('[NIRA-INTEL] Suppressed error:', e instanceof Error ? e.message : e);
+        setBackendStatus('error');
+      }
+    };
 
-    // Polling — OPTIMIZED intervals to minimize edge requests
-    const intervals = [
-      setInterval(() => fetchEndpoint('/api/earthquakes'), 900000),  // 15 min (was 5)
-      setInterval(() => fetchEndpoint('/api/news'), 1800000),        // 30 min (was 10)
-      setInterval(() => fetchEndpoint('/api/markets', d => ({ markets: d })), 900000), // 15 min (was 5)
-    ];
+    loadRegistration('nid');
+    fetchEndpoint('/api/news');
+
+    const alertTimer = setTimeout(() => fetchEndpoint('/api/alerts-nira', d => ({ nira_alerts: d.alerts })), 1000);
+
+    // Refresh registration data every 30 minutes
+    const regInterval = setInterval(() => loadRegistration(activeRegistrationLayer), 1800000);
+
     return () => {
-      clearTimeout(marketTimer);
-      clearTimeout(spaceTimer);
-      intervals.forEach(clearInterval);
+      clearTimeout(alertTimer);
+      clearInterval(regInterval);
     };
   }, [fetchEndpoint]);
 
-  // ── LAYER-AWARE DATA LOADING — only fetch when layer is toggled ON ──
+  // ── REGISTRATION LAYER SWITCH — reload data when active layer changes ──
   const layerFetchedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
+    const apiLayer = activeRegistrationLayer;
+    const fetchKey = `reg-${apiLayer}`;
+    if (layerFetchedRef.current.has(fetchKey)) return;
+    layerFetchedRef.current.add(fetchKey);
 
-    // Flights
-    if (activeLayers.flights || activeLayers.military || activeLayers.jets || activeLayers.private) {
-      if (!layerFetchedRef.current.has('flights')) {
-        fetchEndpoint('/api/flights');
-        layerFetchedRef.current.add('flights');
-      }
-    }
-    // Satellites
-    if (activeLayers.satellites && !layerFetchedRef.current.has('satellites')) {
-      fetchEndpoint('/api/satellites');
-      layerFetchedRef.current.add('satellites');
-    }
-    // Fires
-    if (activeLayers.fires && !layerFetchedRef.current.has('fires')) {
-      fetchEndpoint('/api/fires');
-      layerFetchedRef.current.add('fires');
-    }
-    // CCTV
-    if (activeLayers.cctv && !layerFetchedRef.current.has('cctv')) {
-      fetchEndpoint('/api/cctv?region=all');
-      layerFetchedRef.current.add('cctv');
-    }
-    // Maritime
-    if (activeLayers.maritime && !layerFetchedRef.current.has('maritime')) {
-      fetchEndpoint('/api/maritime', d => ({ maritime_ports: d.ports, maritime_chokepoints: d.chokepoints, maritime_ships: d.ships }));
-      layerFetchedRef.current.add('maritime');
-    }
-    // Balloons
-    if (activeLayers.balloons && !layerFetchedRef.current.has('balloons')) {
-      fetchEndpoint('/api/balloons', d => ({ balloons: d.balloons }));
-      layerFetchedRef.current.add('balloons');
-    }
-    // Radiation
-    if (activeLayers.radiation && !layerFetchedRef.current.has('radiation')) {
-      fetchEndpoint('/api/radiation', d => ({ radiation: d.stations }));
-      layerFetchedRef.current.add('radiation');
-    }
-    // Live News
-    if (activeLayers.live_news && !layerFetchedRef.current.has('live_news')) {
-      fetchEndpoint('/api/live-news', d => ({ live_feeds: d.feeds }));
-      layerFetchedRef.current.add('live_news');
-    }
-    // Weather
-    if (activeLayers.weather && !layerFetchedRef.current.has('weather')) {
-      fetchEndpoint('/api/weather', d => ({ weather_events: d.events }));
-      layerFetchedRef.current.add('weather');
-    }
-    // Infrastructure
-    if (activeLayers.infrastructure && !layerFetchedRef.current.has('infrastructure')) {
-      fetchEndpoint('/api/infrastructure', d => ({ infrastructure: d.infrastructure }));
-      layerFetchedRef.current.add('infrastructure');
-    }
-    // Global Incidents (GDELT)
-    if (activeLayers.global_incidents && !layerFetchedRef.current.has('gdelt')) {
-      fetchEndpoint('/api/gdelt', d => ({ gdelt: d.events }));
-      layerFetchedRef.current.add('gdelt');
-    }
+    fetch(`/api/registration?layer=${apiLayer}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (!json) return;
+        dataRef.current = {
+          ...dataRef.current,
+          nira_districts: json.districts,
+          nira_summary: json.summary,
+          nira_priorities: json.priorities,
+        };
+        setNiraStats(json.summary);
+        setDataVersion(v => v + 1);
+      })
+      .catch(e => console.warn('[NIRA-INTEL] Layer fetch error:', e instanceof Error ? e.message : e));
+  }, [activeRegistrationLayer]);
 
-  }, [activeLayers]);
-
-  // ── LAYER-AWARE POLLING — only poll data for active layers ──
-  useEffect(() => {
-    const intervals: ReturnType<typeof setInterval>[] = [];
-    if (activeLayers.flights || activeLayers.military || activeLayers.jets || activeLayers.private) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/flights'), 300000)); // 5 min (was 2 min)
-    }
-
-    if (activeLayers.balloons) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/balloons', d => ({ balloons: d.balloons })), 300000)); // 5m
-    }
-    if (activeLayers.radiation) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/radiation', d => ({ radiation: d.stations })), 300000)); // 5m
-    }
-    if (activeLayers.maritime) {
-      intervals.push(setInterval(() => fetchEndpoint('/api/maritime', d => ({ maritime_ports: d.ports, maritime_chokepoints: d.chokepoints, maritime_ships: d.ships })), 60000)); // 1m
-    }
-    // Fires: no polling needed (data changes very slowly, initial fetch is enough)
-    return () => intervals.forEach(clearInterval);
-  }, [activeLayers, fetchEndpoint]);
-
-  // CCTV: loaded once on layer toggle via layerFetchedRef (no viewport polling)
-
-  // Reactive layer fetch: handled by layerFetchedRef above (no duplicate)
-
-  const totalFlights = useMemo(() => (
-    (data.commercial_flights?.length||0)+(data.private_flights?.length||0)+(data.private_jets?.length||0)+(data.military_flights?.length||0)
-  ), [data.commercial_flights, data.private_flights, data.private_jets, data.military_flights]);
-
+  // No layer-aware polling needed — NIRA data refreshes on a slow schedule
 
   return (
     <main className="fixed inset-0 w-full h-full bg-[var(--bg-void)] overflow-hidden">
@@ -392,7 +308,7 @@ export default function Dashboard() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8, ease: 'easeInOut' }}
             className="absolute inset-0 z-[999] flex flex-col items-center justify-center overflow-hidden"
-            style={{ background: 'radial-gradient(ellipse at center, #0a0a14 0%, var(--bg-void) 70%)' }}
+            style={{ background: 'radial-gradient(ellipse at center, #dbe7f7 0%, var(--bg-void) 70%)' }}
           >
             {/* ── Scanline CRT overlay ── */}
             <div className="absolute inset-0 pointer-events-none z-[1]" style={{
@@ -478,20 +394,22 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* ── OSIRIS title — letter-by-letter stagger ── */}
-            <div className="flex items-center gap-[2px] mb-3 z-[2]">
-              {'OSIRIS'.split('').map((letter, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ delay: 0.5 + i * 0.08, duration: 0.5, ease: 'easeOut' }}
-                  className="text-4xl md:text-5xl font-bold tracking-[0.5em] font-mono"
-                  style={{ color: 'var(--text-heading)', textShadow: '0 0 30px rgba(212,175,55,0.2)' }}
-                >
-                  {letter}
-                </motion.span>
-              ))}
+            {/* ── NIRA-INTEL title ── */}
+            <div className="flex flex-col items-center mb-3 z-[2]">
+              <div className="flex items-center gap-[2px]">
+                {'NIRA-INTEL'.split('').map((letter, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{ delay: 0.4 + i * 0.07, duration: 0.5, ease: 'easeOut' }}
+                    className={`text-3xl md:text-4xl font-bold font-mono ${letter === '-' ? 'mx-1' : 'tracking-[0.3em]'}`}
+                    style={{ color: 'var(--text-heading)' }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </div>
             </div>
 
             {/* ── Subtitle — typewriter reveal ── */}
@@ -502,8 +420,8 @@ export default function Dashboard() {
                 transition={{ delay: 1.2, duration: 0.8, ease: 'easeInOut' }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                <p className="text-[10px] md:text-[11px] font-mono tracking-[0.5em] text-[var(--gold-primary)]" style={{ opacity: 0.8 }}>
-                  GLOBAL INTELLIGENCE PLATFORM
+                <p className="text-[10px] md:text-[11px] font-mono tracking-[0.35em] text-[var(--gold-primary)]" style={{ opacity: 0.8 }}>
+                  CIVIL REGISTRATION INTELLIGENCE · NIRA UGANDA
                 </p>
               </motion.div>
             </div>
@@ -524,10 +442,10 @@ export default function Dashboard() {
               {/* Status messages — cycling */}
               <div className="mt-3 h-4 flex items-center justify-center">
                 {[
-                  { text: 'ESTABLISHING SECURE CONNECTION...', delay: 0.5 },
-                  { text: 'INITIALIZING FEEDS...', delay: 1.1 },
-                  { text: 'CALIBRATING SENSORS...', delay: 1.7 },
-                  { text: 'SYSTEM READY', delay: 2.2 },
+                  { text: 'LOADING DISTRICT BOUNDARIES...', delay: 0.5 },
+                  { text: 'FETCHING REGISTRATION DATA...', delay: 1.1 },
+                  { text: 'CALIBRATING COVERAGE HEATMAP...', delay: 1.7 },
+                  { text: 'DASHBOARD READY', delay: 2.2 },
                 ].map((stage, i) => (
                   <motion.span
                     key={i}
@@ -585,18 +503,20 @@ export default function Dashboard() {
 
       {/* ── MAP ── */}
       <ErrorBoundary name="Map">
-        <OsirisMap 
-          data={data} 
-          activeLayers={activeLayers} 
-          projection={mapProjection} 
-          mapStyle={mapStyle === 'satellite' ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' : 'dark'} 
-          onEntityClick={handleEntityClick} 
-          onMouseCoords={handleMouseCoords} 
-          onRightClick={handleRightClick} 
-          onViewStateChange={setMapView} 
+        <OsirisMap
+          data={data}
+          activeLayers={activeLayers}
+          projection={mapProjection}
+          mapStyle={mapStyle === 'satellite' ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' : 'dark'}
+          onEntityClick={handleEntityClick}
+          onMouseCoords={handleMouseCoords}
+          onRightClick={handleRightClick}
+          onViewStateChange={setMapView}
           flyToLocation={flyToLocation}
           sweepData={sweepData}
           scanTargets={scanTargets}
+          onDistrictClick={setSelectedDistrict}
+          activeRegistrationLayer={activeRegistrationLayer}
         />
       </ErrorBoundary>
 
@@ -639,62 +559,61 @@ export default function Dashboard() {
         </button>
       </motion.div>
 
-      {/* ── HEADER ── */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 2.5 }} className={`absolute top-3 left-3 md:top-5 md:left-5 z-[200] pointer-events-none flex items-center gap-2 md:gap-3`}>
-        <div className="w-7 h-7 md:w-9 md:h-9 flex items-center justify-center relative">
-          {/* Ambient glow ring — slow rotating */}
-          <div className="absolute inset-[-4px] md:inset-[-5px] rounded-full border border-[var(--gold-primary)]/20" style={{ animation: 'osiris-rotate 12s linear infinite' }}>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[var(--gold-primary)] shadow-[0_0_6px_var(--gold-primary)]" />
-          </div>
-          <div className="absolute inset-[-8px] md:inset-[-10px] rounded-full border border-[var(--gold-primary)]/10" style={{ animation: 'osiris-rotate 20s linear infinite reverse' }}>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-0.5 h-0.5 rounded-full bg-[var(--gold-primary)]/60" />
-          </div>
-          <div className="w-5 h-5 md:w-7 md:h-7 rounded-full border-2 border-[var(--gold-primary)] flex items-center justify-center animate-glow-pulse">
-            <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full bg-[var(--gold-primary)]/30 border border-[var(--gold-primary)]/60" />
-          </div>
-          <div className="absolute w-[1px] h-full bg-[var(--gold-primary)]/30" />
-          <div className="absolute w-full h-[1px] bg-[var(--gold-primary)]/30" />
+      {/* ── HEADER — NIRA-INTEL ── */}
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 2.5 }} className="absolute top-3 left-3 md:top-4 md:left-5 z-[200] pointer-events-none flex items-center gap-3">
+        {/* Uganda coat of arms placeholder — coloured circle badge */}
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md"
+          style={{ background: 'linear-gradient(135deg, #1B3A6B, #2557B0)', border: '2px solid rgba(27,58,107,0.3)' }}>
+          <span className="text-white font-bold text-[10px] md:text-xs">UG</span>
         </div>
-        {/* Horizontal rule extending from logo */}
-        <div className="hidden md:block absolute top-1/2 left-[52px] w-[200px] h-[1px] bg-gradient-to-r from-[var(--gold-primary)]/40 via-[var(--gold-primary)]/15 to-transparent" />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <h1 className="text-base md:text-xl font-bold tracking-[0.4em] md:tracking-[0.5em] text-[var(--text-heading)] font-mono">OSIRIS</h1>
-            <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-[1px] rounded-sm border border-[var(--cyan-primary)]/40 bg-[var(--cyan-primary)]/10 text-[7px] font-mono font-bold tracking-[0.15em] text-[var(--cyan-primary)] uppercase" style={{ lineHeight: '1.4' }}>
-              <Globe className="w-2.5 h-2.5" />
-              OPEN SOURCE
+            <h1 className="text-sm md:text-base font-bold tracking-[0.25em] text-[var(--text-heading)] font-mono">NIRA-INTEL</h1>
+            <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-[1px] rounded border border-[var(--cyan-primary)]/30 bg-[var(--cyan-primary)]/8 text-[7px] font-mono font-bold tracking-[0.12em] text-[var(--cyan-primary)] uppercase">
+              PROTOTYPE
             </span>
           </div>
-          <span className="text-[8px] md:text-[9px] text-[var(--gold-primary)] font-mono tracking-[0.2em] md:tracking-[0.3em] opacity-80">GLOBAL INTELLIGENCE COMMAND</span>
+          <span className="text-[8px] md:text-[9px] text-[var(--gold-primary)] font-mono tracking-[0.15em] opacity-75">
+            Civil Registration Intelligence · NIRA Uganda
+          </span>
         </div>
       </motion.div>
 
-      {/* ── TOP-RIGHT STATUS (desktop) — C2 DISPLAY ── */}
+      {/* ── TOP-RIGHT STATUS (desktop) — NIRA Coverage Summary ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3 }} className="status-bar-desktop absolute top-3 right-3 md:top-4 md:right-5 z-[200] pointer-events-none flex items-center gap-1.5 md:gap-3 text-[9px] md:text-[10px] font-mono tracking-widest text-[var(--text-muted)]">
-
-        {/* Zulu Clock */}
-        <span className="hidden lg:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border border-[var(--border-primary)] bg-black/30">
-          <ZuluClock />
-        </span>
-
-        <span className="hidden lg:inline text-[var(--border-primary)]">│</span>
 
         <span className="flex items-center gap-1">SYS: <span className={backendStatus === 'connected' ? 'text-[var(--alert-green)]' : 'text-[var(--alert-red)]'}>{backendStatus.toUpperCase()}</span></span>
 
-        {spaceWeather && <span className="hidden lg:inline">SOLAR: <span style={{ color: spaceWeather.storm_color, fontWeight: 700 }}>Kp{spaceWeather.kp_index}</span></span>}
-
-        {/* Active Data Feeds */}
-        <span className="hidden lg:inline-flex items-center gap-1">
-          <Wifi className="w-3 h-3 text-[var(--cyan-primary)]" />
-          <span className="text-[var(--cyan-primary)] font-bold">{Object.values(activeLayers).filter(Boolean).length}</span>
-          <span className="text-[var(--text-muted)]/60">FEEDS</span>
-        </span>
+        {niraStats && (
+          <>
+            <span className="hidden lg:inline text-[var(--border-primary)]">│</span>
+            <span className="hidden lg:inline-flex items-center gap-1">
+              <Users className="w-3 h-3 text-[var(--gold-primary)]" />
+              <span className="text-[var(--gold-primary)] font-bold">{(niraStats.total_registered / 1e6).toFixed(1)}M</span>
+              <span className="text-[var(--text-muted)]/60">REGISTERED</span>
+            </span>
+            <span className="hidden lg:inline text-[var(--border-primary)]">│</span>
+            <span className="hidden lg:inline-flex items-center gap-1">
+              <CreditCard className="w-3 h-3 text-[var(--cyan-primary)]" />
+              <span className="text-[var(--cyan-primary)] font-bold">{niraStats.national_average}%</span>
+              <span className="text-[var(--text-muted)]/60">NID COV.</span>
+            </span>
+            <span className="hidden lg:inline text-[var(--border-primary)]">│</span>
+            <span className="hidden lg:inline-flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-[var(--alert-red)]" />
+              <span className="text-[var(--alert-red)] font-bold">{niraStats.critical}</span>
+              <span className="text-[var(--text-muted)]/60">CRITICAL</span>
+            </span>
+          </>
+        )}
 
         <UptimeClock />
-        
-        <a href='https://ko-fi.com/M8D41ZYW4Z' target='_blank' className="pointer-events-auto hover:opacity-80 transition-opacity ml-1 flex items-center">
-          <span className="px-3 py-1 rounded-sm border border-[var(--gold-primary)]/40 bg-[var(--gold-primary)]/10 text-[var(--gold-primary)] text-[11px] font-bold tracking-[0.2em]">SUPPORT PROJECT</span>
-        </a>
+
+        <span className="pointer-events-auto ml-1">
+          <span className="px-3 py-1 rounded-sm border border-[var(--gold-primary)]/30 bg-[var(--gold-primary)]/8 text-[var(--gold-primary)] text-[10px] font-bold tracking-[0.15em]">
+            GOV PROTOTYPE
+          </span>
+        </span>
       </motion.div>
 
       {/* ── MOBILE: Compact top status ── */}
@@ -709,40 +628,59 @@ export default function Dashboard() {
 
 
 
-      {/* ── LEFT HUD (desktop): Layers + Stats + Markets + Intel ── */}
+      {/* ── LEFT HUD (desktop): NIRA Layer Controls + Stats ── */}
       <div className="desktop-panel absolute left-5 top-20 bottom-24 w-72 flex flex-col gap-3 z-[200] pointer-events-none overflow-y-auto styled-scrollbar pr-1">
         {showLayers && (
           <>
-            <LayerPanel data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} />
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="glass-panel px-3 py-2.5 pointer-events-auto">
-              <div className="grid grid-cols-5 gap-2 text-center">
-                <div><div className="hud-label">AIRCRAFT</div><div className="hud-value text-[10px] animate-data-pulse">{totalFlights.toLocaleString()}</div></div>
-                <div><div className="hud-label">SATS</div><div className="hud-value text-[10px]">{(data.satellites?.length||0).toLocaleString()}</div></div>
-                <div><div className="hud-label">CCTV</div><div className="hud-value text-[10px]">{(data.cameras?.length||0).toLocaleString()}</div></div>
-                <div><div className="hud-label">WEATHER</div><div className="hud-value text-[10px]" style={{ color: '#E040FB' }}>{(data.weather_events?.length||0)}</div></div>
-                <div><div className="hud-label">NUCLEAR</div><div className="hud-value text-[10px]" style={{ color: '#76FF03' }}>{(data.infrastructure?.length||0)}</div></div>
-              </div>
-            </motion.div>
-            <ViewPresets onNavigate={(lat, lng, zoom) => { setFlyToLocation({ lat, lng, ts: Date.now() }); setMapView(v => ({ ...v, zoom })); }} />
+            <LayerPanel
+              data={data}
+              activeLayers={activeLayers}
+              setActiveLayers={setActiveLayers}
+              onLayerChange={(apiLayer) => setActiveRegistrationLayer(apiLayer)}
+            />
+
+            {/* NIRA Stats Bar */}
+            {niraStats && (
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="glass-panel px-3 py-2.5 pointer-events-auto">
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div>
+                    <div className="hud-label">DISTRICTS</div>
+                    <div className="hud-value text-[10px]">{niraStats.total_districts}</div>
+                  </div>
+                  <div>
+                    <div className="hud-label">CRITICAL</div>
+                    <div className="hud-value text-[10px]" style={{ color: 'var(--alert-red)' }}>{niraStats.critical}</div>
+                  </div>
+                  <div>
+                    <div className="hud-label">MODERATE</div>
+                    <div className="hud-value text-[10px]" style={{ color: 'var(--alert-orange)' }}>{niraStats.needs_attention}</div>
+                  </div>
+                  <div>
+                    <div className="hud-label">ON TRACK</div>
+                    <div className="hud-value text-[10px]" style={{ color: 'var(--alert-green)' }}>{niraStats.on_track}</div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </>
         )}
-        {showMarkets && <MarketsPanel data={data} spaceWeather={spaceWeather} />}
-        {showIntel && <IntelFeed data={data} onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} />}
       </div>
 
-      {/* ── RIGHT HUD (desktop): Search + RECON + Live Alerts ── */}
+      {/* ── RIGHT HUD (desktop): Search + District Intel + NIRA Alerts ── */}
       <div className="desktop-panel absolute right-5 top-20 bottom-24 w-80 flex flex-col gap-3 z-[200] pointer-events-auto overflow-y-auto styled-scrollbar pr-1">
         <div className="flex gap-2 items-start">
-          <div className="flex-1"><SearchBar onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} /></div>
+          <div className="flex-1"><SearchBar onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} districts={data.nira_districts} /></div>
           <div className="relative"><SharePanel mapView={mapView} activeLayers={activeLayers} mouseCoords={mouseCoords} /></div>
         </div>
-        <OsintPanel onSweepVisualize={setSweepData} onScanGeolocate={(target, data) => {
-          setScanTargets(prev => {
-            const existing = prev.filter(t => t.id !== target);
-            return [{ id: target, timestamp: Date.now(), ...data }, ...existing].slice(0, 10);
-          });
-          setFlyToLocation({ lat: data.lat, lng: data.lng, ts: Date.now() });
-        }} />
+
+        {/* District Intel Panel */}
+        <DistrictIntelPanel
+          district={selectedDistrict}
+          onClose={() => setSelectedDistrict(null)}
+          onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })}
+        />
+
+        {/* NIRA Live Alerts */}
         <LiveAlerts data={data} onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} onWatchFeed={(url, name) => { setLiveFeedUrl(url); setLiveFeedName(name); }} />
       </div>
 
@@ -855,9 +793,9 @@ export default function Dashboard() {
             <div className="glass-panel mobile-nav-inner">
               {[
                 { id: 'layers' as const, icon: Layers, label: 'LAYERS' },
-                { id: 'markets' as const, icon: BarChart3, label: 'MARKETS' },
+                { id: 'markets' as const, icon: BarChart3, label: 'ALERTS' },
                 { id: 'intel' as const, icon: Newspaper, label: 'INTEL' },
-                { id: 'recon' as const, icon: Radar, label: 'RECON' },
+                { id: 'recon' as const, icon: Radar, label: 'DISTRICTS' },
                 { id: 'search' as const, icon: Search, label: 'SEARCH' },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setMobilePanel(mobilePanel === tab.id ? null : tab.id)}
@@ -882,19 +820,18 @@ export default function Dashboard() {
                 <div className="px-3 pb-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="hud-text text-[9px] text-[var(--text-primary)]">
-                      {mobilePanel === 'layers' ? 'LAYERS & STATS' : mobilePanel === 'markets' ? 'MARKETS & INTEL' : mobilePanel === 'intel' ? 'INTEL FEED' : mobilePanel === 'recon' ? 'OSIRIS RECON' : 'SEARCH'}
+                      {mobilePanel === 'layers' ? 'LAYERS & STATS' : mobilePanel === 'markets' ? 'NIRA ALERTS' : mobilePanel === 'intel' ? 'INTEL FEED' : mobilePanel === 'recon' ? 'DISTRICT INTEL' : 'SEARCH'}
                     </span>
                     <button onClick={() => setMobilePanel(null)} className="text-[var(--text-muted)] p-1"><X className="w-4 h-4" /></button>
                   </div>
                   {mobilePanel === 'layers' && (
                     <>
                       <div className="glass-panel-sm p-2 mb-2">
-                        <div className="grid grid-cols-5 gap-1 text-center">
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>AIR</div><div className="hud-value text-[9px]">{totalFlights.toLocaleString()}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>SAT</div><div className="hud-value text-[9px]">{(data.satellites?.length||0)}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>CAM</div><div className="hud-value text-[9px]">{(data.cameras?.length||0)}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>WX</div><div className="hud-value text-[9px]" style={{color:'#E040FB'}}>{(data.weather_events?.length||0)}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>NUC</div><div className="hud-value text-[9px]" style={{color:'#76FF03'}}>{(data.infrastructure?.length||0)}</div></div>
+                        <div className="grid grid-cols-4 gap-1 text-center">
+                          <div><div className="hud-label" style={{fontSize:'6px'}}>DISTRICTS</div><div className="hud-value text-[9px]">{niraStats?.total_districts || (data.nira_districts?.length || 0)}</div></div>
+                          <div><div className="hud-label" style={{fontSize:'6px'}}>CRITICAL</div><div className="hud-value text-[9px]" style={{color:'#DC2626'}}>{niraStats?.critical ?? '—'}</div></div>
+                          <div><div className="hud-label" style={{fontSize:'6px'}}>MODERATE</div><div className="hud-value text-[9px]" style={{color:'#D97706'}}>{niraStats?.needs_attention ?? '—'}</div></div>
+                          <div><div className="hud-label" style={{fontSize:'6px'}}>ON TRACK</div><div className="hud-value text-[9px]" style={{color:'#16A34A'}}>{niraStats?.on_track ?? '—'}</div></div>
                         </div>
                       </div>
                       <LayerPanel data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} />
@@ -903,17 +840,26 @@ export default function Dashboard() {
                       </div>
                     </>
                   )}
-                  {mobilePanel === 'markets' && <MarketsPanel data={data} spaceWeather={spaceWeather} />}
+                  {mobilePanel === 'markets' && <LiveAlerts data={data} onLocate={(lat, lng) => { setFlyToLocation({ lat, lng, ts: Date.now() }); setMobilePanel(null); }} />}
                   {mobilePanel === 'intel' && <IntelFeed data={data} onLocate={(lat, lng) => { setFlyToLocation({ lat, lng, ts: Date.now() }); setMobilePanel(null); }} />}
                   {mobilePanel === 'search' && (
                     <div className="space-y-2">
-                      <SearchBar onLocate={(lat, lng) => { setFlyToLocation({ lat, lng, ts: Date.now() }); setMobilePanel(null); }} />
+                      <SearchBar onLocate={(lat, lng) => { setFlyToLocation({ lat, lng, ts: Date.now() }); setMobilePanel(null); }} districts={data.nira_districts} />
                       <SharePanel mapView={mapView} activeLayers={activeLayers} mouseCoords={mouseCoords} />
                     </div>
                   )}
                   {mobilePanel === 'recon' && (
                     <div className="space-y-2">
-                      <OsintPanel isOpen={true} onClose={() => setMobilePanel(null)} isMobile={true} onSweepVisualize={setSweepData} />
+                      <DistrictIntelPanel
+                        district={selectedDistrict}
+                        onClose={() => setMobilePanel(null)}
+                        onLocate={(lat, lng) => { setFlyToLocation({ lat, lng, ts: Date.now() }); setMobilePanel(null); }}
+                      />
+                      {!selectedDistrict && (
+                        <p className="text-center text-[10px] font-mono text-[var(--text-muted)] py-4">
+                          Tap a district on the map to view intel
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -957,34 +903,40 @@ export default function Dashboard() {
 
             <div className="w-px h-8 bg-gradient-to-b from-transparent via-[var(--border-primary)] to-transparent flex-shrink-0" />
 
+            {/* COVERAGE */}
+            <div className="flex flex-col items-center px-3 min-w-[80px]">
+              <div className="hud-label">NID COVERAGE</div>
+              <div className="flex items-center gap-1">
+                <CreditCard className="w-3 h-3 text-[var(--gold-primary)]" />
+                <span className="text-[10px] font-mono font-bold text-[var(--gold-primary)] tabular-nums">
+                  {niraStats ? `${niraStats.national_average}%` : '—'}
+                </span>
+              </div>
+            </div>
+
+            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[var(--border-primary)] to-transparent flex-shrink-0" />
+
+            {/* CRITICAL */}
+            <div className="flex flex-col items-center px-3 min-w-[60px]">
+              <div className="hud-label">CRITICAL</div>
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-[var(--alert-red)]" />
+                <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color: 'var(--alert-red)' }}>
+                  {niraStats ? niraStats.critical : '—'}
+                </span>
+              </div>
+            </div>
+
+            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[var(--border-primary)] to-transparent flex-shrink-0" />
+
             {/* ACTIVE LAYERS */}
             <div className="flex flex-col items-center px-3 min-w-[60px]">
-              <div className="hud-label">ACTIVE LAYERS</div>
-              <div className="flex items-center gap-1">
-                <Layers className="w-3 h-3 text-[var(--gold-primary)]" />
-                <span className="text-[10px] font-mono font-bold text-[var(--gold-primary)] tabular-nums">{Object.values(activeLayers).filter(Boolean).length}</span>
-              </div>
-            </div>
-
-            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[var(--border-primary)] to-transparent flex-shrink-0" />
-
-            {/* DATA FEEDS */}
-            <div className="flex flex-col items-center px-3 min-w-[60px]">
-              <div className="hud-label">FEEDS</div>
+              <div className="hud-label">DATA FEEDS</div>
               <div className="flex items-center gap-1">
                 <Activity className="w-3 h-3 text-[var(--cyan-primary)]" />
-                <span className="text-[10px] font-mono font-bold text-[var(--cyan-primary)] tabular-nums">{Object.values(activeLayers).filter(Boolean).length}</span>
-              </div>
-            </div>
-
-            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[var(--border-primary)] to-transparent flex-shrink-0" />
-
-            {/* THROUGHPUT */}
-            <div className="flex flex-col items-center px-3 min-w-[70px]">
-              <div className="hud-label">THROUGHPUT</div>
-              <div className="flex items-center gap-1">
-                <Database className="w-3 h-3 text-[var(--alert-green)]" />
-                <DataThroughput />
+                <span className="text-[10px] font-mono font-bold text-[var(--cyan-primary)] tabular-nums">
+                  {Object.entries(activeLayers).filter(([k, v]) => v && ['nid_coverage','birth_reg','death_reg','marriage_reg','centres'].includes(k)).length}
+                </span>
               </div>
             </div>
 
@@ -1053,7 +1005,7 @@ export default function Dashboard() {
       <KeyboardShortcuts />
 
       {/* ── GLOBAL STATUS TICKER (bottom) ── */}
-      <GlobalStatusBar />
+      <GlobalStatusBar niraStats={niraStats} alertCount={data.nira_alerts?.length ?? 0} districtCount={data.nira_districts?.length ?? 57} />
 
       {/* Shortcut hint */}
       <div className="desktop-only absolute bottom-[26px] right-5 z-[200] pointer-events-none text-[6px] font-mono text-[var(--text-muted)]/40 tracking-widest">

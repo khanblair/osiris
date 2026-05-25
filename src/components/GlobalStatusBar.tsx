@@ -1,86 +1,76 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-interface Exchange { name: string; country: string; open: boolean; }
-interface CountryRisk { code: string; risk_score: number; risk_level: string; tags: string[]; }
+interface GlobalStatusBarProps {
+  niraStats?: any;
+  alertCount?: number;
+  districtCount?: number;
+}
 
-const RISK_TOOLTIPS: Record<string, string> = {
-  CRITICAL: 'Active conflict, sanctions, or major instability detected',
-  HIGH: 'Elevated threat level — ongoing tensions or security concerns',
-  ELEVATED: 'Moderate risk — political instability or regional disputes',
-  LOW: 'Stable — no significant threats detected',
-};
+const TICKER_ITEMS = [
+  '🇺🇬 UGANDA · CIVIL REGISTRATION INTELLIGENCE PLATFORM',
+  '📋 SOURCE: NIRA Annual Report 2022/23 + UBOS Census 2024',
+  '🏥 DATA FEEDS: NIRA Operations · WHO AFRO · UNHCR Uganda · UBOS',
+  '⚠️ PROTOTYPE — For demonstration purposes at the Uganda Ministry of ICT Showcase',
+  '📌 TARGET: 100% NID coverage for all 47M+ Ugandans by 2030',
+  '🚐 MOBILE TEAMS: Karamoja sub-region flagged as highest priority corridor',
+  '📊 CRVS METRICS: NID · Birth · Death · Marriage registration rates',
+  '🛰️ NIRA-INTEL built on open-source geospatial intelligence infrastructure',
+  '🏛️ MINISTRY OF ICT & NATIONAL GUIDANCE — Government Systems Prototype Showcase 2026',
+];
 
-export default function GlobalStatusBar() {
-  const [exchanges, setExchanges] = useState<Exchange[]>([]);
-  const [risks, setRisks] = useState<CountryRisk[]>([]);
-  const [cyber, setCyber] = useState<any>(null);
-  const [openCount, setOpenCount] = useState(0);
-  const [hoveredRisk, setHoveredRisk] = useState<CountryRisk | null>(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [riskRes, cyberRes] = await Promise.allSettled([
-          fetch('/api/country-risk'),
-          fetch('/api/cyber-threats'),
-        ]);
-        if (riskRes.status === 'fulfilled' && riskRes.value.ok) {
-          const d = await riskRes.value.json();
-          setExchanges(d.exchanges || []);
-          setRisks(d.countries || []);
-          setOpenCount(d.open_exchanges || 0);
-        }
-        if (cyberRes.status === 'fulfilled' && cyberRes.value.ok) {
-          setCyber(await cyberRes.value.json());
-        }
-      } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
-    };
-    fetchData();
-    const iv = setInterval(fetchData, 1800000); // 30 min (was 5 min)
-    return () => clearInterval(iv);
-  }, []);
-
-  const topRisks = risks.slice(0, 6);
-  const cveCount = cyber?.stats?.active_cves || 0;
-
-  const riskColor = (level: string) =>
-    level === 'CRITICAL' ? '#FF3D3D' : level === 'HIGH' ? '#FF9500' : level === 'ELEVATED' ? '#FFD700' : '#00E676';
-
-  const countryFlag = (code: string) => {
-    try {
-      return String.fromCodePoint(...code.toUpperCase().split('').map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
-    } catch { return code; }
-  };
-
-  if (exchanges.length === 0 && risks.length === 0) return null;
+export default function GlobalStatusBar({ niraStats, alertCount = 0, districtCount = 57 }: GlobalStatusBarProps) {
+  const coverage = niraStats?.national_average ?? '—';
+  const critical = niraStats?.critical ?? '—';
+  const registered = niraStats?.total_registered
+    ? `${(niraStats.total_registered / 1e6).toFixed(1)}M`
+    : '19.3M';
 
   const tickerContent = (
     <>
-      {exchanges.map(ex => (
-        <span key={ex.name} className="inline-flex items-center gap-0.5 mx-2">
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ex.open ? 'bg-[var(--alert-green)]' : 'bg-[var(--text-muted)]/30'}`} />
-          <span className={`${ex.open ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]/40'}`}>{ex.name}</span>
+      <span className="inline-flex items-center gap-1.5 mx-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
+        <span className="text-[var(--gold-primary)] font-bold">NIRA-INTEL</span>
+        <span className="text-[var(--text-muted)]">ONLINE</span>
+      </span>
+      <span className="text-[var(--border-primary)] mx-1">|</span>
+
+      <span className="inline-flex items-center gap-1 mx-3">
+        <span className="text-[var(--text-muted)]">REGISTERED</span>
+        <span className="text-[var(--gold-primary)] font-bold">{registered}</span>
+      </span>
+
+      <span className="inline-flex items-center gap-1 mx-3">
+        <span className="text-[var(--text-muted)]">NID COV.</span>
+        <span className="font-bold" style={{ color: '#1E6B3C' }}>{coverage}%</span>
+      </span>
+
+      <span className="inline-flex items-center gap-1 mx-3">
+        <span className="text-[var(--text-muted)]">CRITICAL</span>
+        <span className="font-bold" style={{ color: '#DC2626' }}>{critical}</span>
+        <span className="text-[var(--text-muted)]">DISTRICTS</span>
+      </span>
+
+      <span className="text-[var(--border-primary)] mx-1">|</span>
+
+      {TICKER_ITEMS.map((item, i) => (
+        <span key={i} className="inline-flex items-center gap-0.5 mx-4 text-[var(--text-secondary)]">
+          {item}
         </span>
       ))}
+
       <span className="text-[var(--border-primary)] mx-1">|</span>
-      {topRisks.map(r => (
-        <span
-          key={r.code}
-          className="inline-flex items-center gap-0.5 mx-1.5 relative cursor-help pointer-events-auto"
-          onMouseEnter={() => setHoveredRisk(r)}
-          onMouseLeave={() => setHoveredRisk(null)}
-        >
-          <span className="text-[10px]">{countryFlag(r.code)}</span>
-          <span style={{ color: riskColor(r.risk_level) }} className="font-bold">{r.risk_score}</span>
-        </span>
-      ))}
-      <span className="text-[var(--border-primary)] mx-1">|</span>
-      <span className="inline-flex items-center gap-1 mx-2">
-        <span className="text-[#E040FB]">CYBER</span>
-        <span className="text-[var(--text-primary)]">{cveCount} CVEs</span>
+
+      <span className="inline-flex items-center gap-1 mx-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[var(--gold-primary)]" />
+        <span className="text-[var(--text-muted)]">ALERTS</span>
+        <span className="text-[var(--gold-primary)] font-bold">{alertCount}</span>
+      </span>
+
+      <span className="inline-flex items-center gap-1 mx-3">
+        <span className="text-[var(--text-muted)]">DISTRICTS MONITORED</span>
+        <span className="font-bold text-[var(--gold-primary)]">{districtCount}</span>
       </span>
     </>
   );
@@ -92,14 +82,11 @@ export default function GlobalStatusBar() {
       transition={{ delay: 4, duration: 0.8 }}
       className="hidden md:block absolute bottom-0 left-0 right-0 z-[198] pointer-events-none"
     >
-      <div className="h-[22px] overflow-hidden bg-[var(--bg-panel)]/80 border-t border-[var(--border-secondary)]/50 flex items-center text-[8px] font-mono tracking-wider backdrop-blur-sm">
-        {/* Static label */}
-        <div className="flex-shrink-0 px-2 h-full flex items-center gap-1 border-r border-[var(--border-secondary)]/50 bg-[var(--bg-panel)] pointer-events-auto">
-          <span className="text-[var(--text-muted)]">MKT</span>
-          <span className="text-[var(--gold-primary)] font-bold">{openCount}/{exchanges.length}</span>
+      <div className="h-[22px] overflow-hidden bg-[var(--bg-panel)]/90 border-t border-[var(--border-secondary)]/50 flex items-center text-[8px] font-mono tracking-wider backdrop-blur-sm">
+        <div className="flex-shrink-0 px-2 h-full flex items-center gap-1 border-r border-[var(--border-secondary)]/50 bg-[var(--bg-panel)]">
+          <span className="text-[9px]">🇺🇬</span>
+          <span className="text-[var(--gold-primary)] font-bold">NIRA</span>
         </div>
-
-        {/* CSS-animated ticker */}
         <div className="flex-1 overflow-hidden relative">
           <div className="flex items-center animate-ticker whitespace-nowrap">
             {tickerContent}
@@ -107,35 +94,6 @@ export default function GlobalStatusBar() {
           </div>
         </div>
       </div>
-
-      {/* Hover tooltip for risk scores */}
-      {hoveredRisk && (
-        <div
-          className="absolute bottom-[28px] left-1/2 -translate-x-1/2 z-[300] pointer-events-none"
-        >
-          <div className="glass-panel px-3 py-2 text-[10px] font-mono text-center whitespace-nowrap" style={{ borderColor: `${riskColor(hoveredRisk.risk_level)}40` }}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[12px]">{countryFlag(hoveredRisk.code)}</span>
-              <span className="font-bold" style={{ color: riskColor(hoveredRisk.risk_level) }}>
-                {hoveredRisk.risk_level}
-              </span>
-              <span className="text-[var(--text-muted)]">Score: {hoveredRisk.risk_score}/100</span>
-            </div>
-            <div className="text-[9px] text-[var(--text-secondary)]">
-              {RISK_TOOLTIPS[hoveredRisk.risk_level] || 'Risk assessment based on global threat data'}
-            </div>
-            {hoveredRisk.tags?.length > 0 && (
-              <div className="flex gap-1 mt-1 justify-center flex-wrap">
-                {hoveredRisk.tags.slice(0, 3).map(t => (
-                  <span key={t} className="px-1.5 py-0.5 rounded text-[8px]" style={{ backgroundColor: `${riskColor(hoveredRisk.risk_level)}15`, color: riskColor(hoveredRisk.risk_level) }}>
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }

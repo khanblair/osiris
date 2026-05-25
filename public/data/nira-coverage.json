@@ -1,0 +1,430 @@
+{
+  "metadata": {
+    "source": "NIRA Annual Report 2022/23 + UBOS Census 2024 (Prototype data — production will connect to live NIRA database)",
+    "last_updated": "2024-01-01",
+    "note": "Coverage percentages are derived from UBOS sub-national estimates and NIRA regional reports. District-level disaggregation is estimated for the prototype.",
+    "national_summary": {
+      "total_population": 47123531,
+      "total_registered": 19341368,
+      "nid_coverage_pct": 41.1,
+      "birth_registration_pct": 34.2,
+      "death_registration_pct": 22.8,
+      "marriage_registration_pct": 9.4,
+      "total_centres": 312,
+      "critical_districts": 18,
+      "needs_attention_districts": 67,
+      "on_track_districts": 15
+    }
+  },
+  "districts": [
+    {
+      "district_id": "UGA001", "name": "Kampala", "region": "Central", "subregion": "Kampala Metropolitan",
+      "population": 1680000, "nid_registered": 1176000,
+      "nid_coverage_pct": 70.0, "birth_registration_pct": 68.2, "death_registration_pct": 51.0, "marriage_registration_pct": 22.0,
+      "registration_centres": 14, "lat": 0.3476, "lon": 32.5825, "status": "on_track",
+      "trend": "stable", "mobile_teams_needed": 0, "last_drive": "2024-10"
+    },
+    {
+      "district_id": "UGA002", "name": "Wakiso", "region": "Central", "subregion": "Kampala Metropolitan",
+      "population": 2007000, "nid_registered": 1244340,
+      "nid_coverage_pct": 62.0, "birth_registration_pct": 58.4, "death_registration_pct": 42.1, "marriage_registration_pct": 17.8,
+      "registration_centres": 11, "lat": 0.1897, "lon": 32.4563, "status": "on_track",
+      "trend": "improving", "mobile_teams_needed": 1, "last_drive": "2024-08"
+    },
+    {
+      "district_id": "UGA003", "name": "Mukono", "region": "Central", "subregion": "Buganda",
+      "population": 1205000, "nid_registered": 663550,
+      "nid_coverage_pct": 55.1, "birth_registration_pct": 51.3, "death_registration_pct": 37.8, "marriage_registration_pct": 14.6,
+      "registration_centres": 8, "lat": 0.3435, "lon": 32.7537, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-06"
+    },
+    {
+      "district_id": "UGA004", "name": "Buikwe", "region": "Central", "subregion": "Buganda",
+      "population": 447000, "nid_registered": 214560,
+      "nid_coverage_pct": 48.0, "birth_registration_pct": 44.1, "death_registration_pct": 31.5, "marriage_registration_pct": 11.2,
+      "registration_centres": 5, "lat": 0.3163, "lon": 33.0234, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-04"
+    },
+    {
+      "district_id": "UGA005", "name": "Kayunga", "region": "Central", "subregion": "Buganda",
+      "population": 379000, "nid_registered": 163070,
+      "nid_coverage_pct": 43.0, "birth_registration_pct": 39.2, "death_registration_pct": 27.8, "marriage_registration_pct": 9.8,
+      "registration_centres": 4, "lat": 0.7167, "lon": 32.9000, "status": "needs_attention",
+      "trend": "declining", "mobile_teams_needed": 3, "last_drive": "2023-11"
+    },
+    {
+      "district_id": "UGA006", "name": "Kalangala", "region": "Central", "subregion": "Islands",
+      "population": 55000, "nid_registered": 13200,
+      "nid_coverage_pct": 24.0, "birth_registration_pct": 20.1, "death_registration_pct": 12.4, "marriage_registration_pct": 4.8,
+      "registration_centres": 2, "lat": -0.3072, "lon": 32.2282, "status": "critical",
+      "trend": "declining", "mobile_teams_needed": 4, "last_drive": "2022-08",
+      "notes": "Island district — boat access required for mobile team deployment"
+    },
+    {
+      "district_id": "UGA007", "name": "Buvuma", "region": "Central", "subregion": "Islands",
+      "population": 98000, "nid_registered": 27440,
+      "nid_coverage_pct": 28.0, "birth_registration_pct": 23.6, "death_registration_pct": 14.8, "marriage_registration_pct": 5.6,
+      "registration_centres": 2, "lat": 0.4000, "lon": 33.2500, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-03",
+      "notes": "Island district — limited road access"
+    },
+    {
+      "district_id": "UGA008", "name": "Mpigi", "region": "Central", "subregion": "Buganda",
+      "population": 258000, "nid_registered": 113520,
+      "nid_coverage_pct": 44.0, "birth_registration_pct": 40.3, "death_registration_pct": 28.7, "marriage_registration_pct": 10.4,
+      "registration_centres": 4, "lat": 0.2255, "lon": 32.3147, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-02"
+    },
+    {
+      "district_id": "UGA009", "name": "Mityana", "region": "Central", "subregion": "Buganda",
+      "population": 349000, "nid_registered": 160540,
+      "nid_coverage_pct": 46.0, "birth_registration_pct": 42.1, "death_registration_pct": 29.8, "marriage_registration_pct": 10.9,
+      "registration_centres": 4, "lat": 0.4145, "lon": 32.0202, "status": "needs_attention",
+      "trend": "improving", "mobile_teams_needed": 2, "last_drive": "2024-05"
+    },
+    {
+      "district_id": "UGA010", "name": "Masaka", "region": "Central", "subregion": "Buganda",
+      "population": 488000, "nid_registered": 263520,
+      "nid_coverage_pct": 54.0, "birth_registration_pct": 50.2, "death_registration_pct": 36.8, "marriage_registration_pct": 14.1,
+      "registration_centres": 7, "lat": 0.3393, "lon": 31.7376, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 1, "last_drive": "2024-07"
+    },
+    {
+      "district_id": "UGA011", "name": "Jinja", "region": "Eastern", "subregion": "Busoga",
+      "population": 527000, "nid_registered": 274040,
+      "nid_coverage_pct": 52.0, "birth_registration_pct": 48.1, "death_registration_pct": 34.9, "marriage_registration_pct": 13.7,
+      "registration_centres": 7, "lat": 0.4244, "lon": 33.2041, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-06"
+    },
+    {
+      "district_id": "UGA012", "name": "Mbale", "region": "Eastern", "subregion": "Elgon",
+      "population": 516000, "nid_registered": 263160,
+      "nid_coverage_pct": 51.0, "birth_registration_pct": 47.2, "death_registration_pct": 33.6, "marriage_registration_pct": 13.1,
+      "registration_centres": 7, "lat": 1.0735, "lon": 34.1754, "status": "needs_attention",
+      "trend": "improving", "mobile_teams_needed": 2, "last_drive": "2024-05"
+    },
+    {
+      "district_id": "UGA013", "name": "Tororo", "region": "Eastern", "subregion": "Teso",
+      "population": 560000, "nid_registered": 263200,
+      "nid_coverage_pct": 47.0, "birth_registration_pct": 43.1, "death_registration_pct": 30.4, "marriage_registration_pct": 11.6,
+      "registration_centres": 6, "lat": 0.6938, "lon": 34.1795, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-03"
+    },
+    {
+      "district_id": "UGA014", "name": "Iganga", "region": "Eastern", "subregion": "Busoga",
+      "population": 472000, "nid_registered": 212400,
+      "nid_coverage_pct": 45.0, "birth_registration_pct": 41.3, "death_registration_pct": 29.2, "marriage_registration_pct": 10.8,
+      "registration_centres": 5, "lat": 0.6094, "lon": 33.4884, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2023-12"
+    },
+    {
+      "district_id": "UGA015", "name": "Bugiri", "region": "Eastern", "subregion": "Busoga",
+      "population": 400000, "nid_registered": 168000,
+      "nid_coverage_pct": 42.0, "birth_registration_pct": 38.1, "death_registration_pct": 26.7, "marriage_registration_pct": 9.9,
+      "registration_centres": 4, "lat": 0.5697, "lon": 33.7357, "status": "needs_attention",
+      "trend": "declining", "mobile_teams_needed": 3, "last_drive": "2023-09"
+    },
+    {
+      "district_id": "UGA016", "name": "Busia", "region": "Eastern", "subregion": "Teso",
+      "population": 352000, "nid_registered": 154880,
+      "nid_coverage_pct": 44.0, "birth_registration_pct": 40.2, "death_registration_pct": 28.6, "marriage_registration_pct": 10.5,
+      "registration_centres": 4, "lat": 0.4603, "lon": 34.0899, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-01"
+    },
+    {
+      "district_id": "UGA017", "name": "Soroti", "region": "Eastern", "subregion": "Teso",
+      "population": 279000, "nid_registered": 111600,
+      "nid_coverage_pct": 40.0, "birth_registration_pct": 36.4, "death_registration_pct": 25.8, "marriage_registration_pct": 9.1,
+      "registration_centres": 4, "lat": 1.7140, "lon": 33.6112, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-10"
+    },
+    {
+      "district_id": "UGA018", "name": "Kumi", "region": "Eastern", "subregion": "Teso",
+      "population": 248000, "nid_registered": 94240,
+      "nid_coverage_pct": 38.0, "birth_registration_pct": 34.2, "death_registration_pct": 23.8, "marriage_registration_pct": 8.6,
+      "registration_centres": 3, "lat": 1.4594, "lon": 33.9328, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-11"
+    },
+    {
+      "district_id": "UGA019", "name": "Kapchorwa", "region": "Eastern", "subregion": "Elgon",
+      "population": 144000, "nid_registered": 51840,
+      "nid_coverage_pct": 36.0, "birth_registration_pct": 32.1, "death_registration_pct": 22.4, "marriage_registration_pct": 7.8,
+      "registration_centres": 3, "lat": 1.4026, "lon": 34.4491, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-08"
+    },
+    {
+      "district_id": "UGA020", "name": "Pallisa", "region": "Eastern", "subregion": "Teso",
+      "population": 375000, "nid_registered": 131250,
+      "nid_coverage_pct": 35.0, "birth_registration_pct": 31.3, "death_registration_pct": 21.8, "marriage_registration_pct": 7.6,
+      "registration_centres": 3, "lat": 1.1438, "lon": 33.7093, "status": "needs_attention",
+      "trend": "declining", "mobile_teams_needed": 3, "last_drive": "2023-07"
+    },
+    {
+      "district_id": "UGA021", "name": "Bududa", "region": "Eastern", "subregion": "Elgon",
+      "population": 193000, "nid_registered": 63690,
+      "nid_coverage_pct": 33.0, "birth_registration_pct": 29.1, "death_registration_pct": 19.8, "marriage_registration_pct": 7.1,
+      "registration_centres": 2, "lat": 1.0118, "lon": 34.3320, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-06"
+    },
+    {
+      "district_id": "UGA022", "name": "Sironko", "region": "Eastern", "subregion": "Elgon",
+      "population": 232000, "nid_registered": 78880,
+      "nid_coverage_pct": 34.0, "birth_registration_pct": 30.2, "death_registration_pct": 21.0, "marriage_registration_pct": 7.4,
+      "registration_centres": 3, "lat": 1.2251, "lon": 34.2441, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-09"
+    },
+    {
+      "district_id": "UGA023", "name": "Gulu", "region": "Northern", "subregion": "Acholi",
+      "population": 486000, "nid_registered": 233280,
+      "nid_coverage_pct": 48.0, "birth_registration_pct": 44.1, "death_registration_pct": 31.4, "marriage_registration_pct": 11.8,
+      "registration_centres": 6, "lat": 2.7748, "lon": 32.2990, "status": "needs_attention",
+      "trend": "improving", "mobile_teams_needed": 2, "last_drive": "2024-04"
+    },
+    {
+      "district_id": "UGA024", "name": "Lira", "region": "Northern", "subregion": "Lango",
+      "population": 414000, "nid_registered": 182160,
+      "nid_coverage_pct": 44.0, "birth_registration_pct": 40.2, "death_registration_pct": 28.6, "marriage_registration_pct": 10.7,
+      "registration_centres": 5, "lat": 2.2499, "lon": 32.8999, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-02"
+    },
+    {
+      "district_id": "UGA025", "name": "Kitgum", "region": "Northern", "subregion": "Acholi",
+      "population": 256000, "nid_registered": 97280,
+      "nid_coverage_pct": 38.0, "birth_registration_pct": 34.1, "death_registration_pct": 23.6, "marriage_registration_pct": 8.8,
+      "registration_centres": 3, "lat": 3.2747, "lon": 32.8849, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-11"
+    },
+    {
+      "district_id": "UGA026", "name": "Pader", "region": "Northern", "subregion": "Acholi",
+      "population": 184000, "nid_registered": 64400,
+      "nid_coverage_pct": 35.0, "birth_registration_pct": 31.2, "death_registration_pct": 21.6, "marriage_registration_pct": 7.8,
+      "registration_centres": 2, "lat": 3.0088, "lon": 33.2108, "status": "needs_attention",
+      "trend": "declining", "mobile_teams_needed": 3, "last_drive": "2023-08"
+    },
+    {
+      "district_id": "UGA027", "name": "Adjumani", "region": "Northern", "subregion": "West Nile",
+      "population": 278000, "nid_registered": 88960,
+      "nid_coverage_pct": 32.0, "birth_registration_pct": 27.8, "death_registration_pct": 18.6, "marriage_registration_pct": 6.8,
+      "registration_centres": 3, "lat": 3.3786, "lon": 31.7878, "status": "needs_attention",
+      "trend": "declining", "mobile_teams_needed": 4, "last_drive": "2023-06",
+      "notes": "High refugee population — Bidi Bidi settlement nearby (280,000 refugees)"
+    },
+    {
+      "district_id": "UGA028", "name": "Arua", "region": "Northern", "subregion": "West Nile",
+      "population": 944000, "nid_registered": 339840,
+      "nid_coverage_pct": 36.0, "birth_registration_pct": 32.1, "death_registration_pct": 22.4, "marriage_registration_pct": 8.1,
+      "registration_centres": 7, "lat": 3.0200, "lon": 30.9100, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-10"
+    },
+    {
+      "district_id": "UGA029", "name": "Yumbe", "region": "Northern", "subregion": "West Nile",
+      "population": 544000, "nid_registered": 157760,
+      "nid_coverage_pct": 29.0, "birth_registration_pct": 24.8, "death_registration_pct": 16.4, "marriage_registration_pct": 5.9,
+      "registration_centres": 3, "lat": 3.4647, "lon": 31.2474, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 5, "last_drive": "2023-05",
+      "notes": "Hosts Imvepi and Rhino Camp refugee settlements — over 120,000 refugees"
+    },
+    {
+      "district_id": "UGA030", "name": "Moyo", "region": "Northern", "subregion": "West Nile",
+      "population": 125000, "nid_registered": 41250,
+      "nid_coverage_pct": 33.0, "birth_registration_pct": 29.2, "death_registration_pct": 20.1, "marriage_registration_pct": 7.3,
+      "registration_centres": 2, "lat": 3.6500, "lon": 31.7300, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-09"
+    },
+    {
+      "district_id": "UGA031", "name": "Nebbi", "region": "Northern", "subregion": "West Nile",
+      "population": 274000, "nid_registered": 101380,
+      "nid_coverage_pct": 37.0, "birth_registration_pct": 33.1, "death_registration_pct": 23.2, "marriage_registration_pct": 8.4,
+      "registration_centres": 3, "lat": 2.4777, "lon": 31.0890, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-10"
+    },
+    {
+      "district_id": "UGA032", "name": "Masindi", "region": "Northern", "subregion": "Bunyoro",
+      "population": 319000, "nid_registered": 133980,
+      "nid_coverage_pct": 42.0, "birth_registration_pct": 38.2, "death_registration_pct": 27.1, "marriage_registration_pct": 9.8,
+      "registration_centres": 4, "lat": 1.6826, "lon": 31.7148, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-01"
+    },
+    {
+      "district_id": "UGA033", "name": "Amuru", "region": "Northern", "subregion": "Acholi",
+      "population": 198000, "nid_registered": 67320,
+      "nid_coverage_pct": 34.0, "birth_registration_pct": 30.1, "death_registration_pct": 20.8, "marriage_registration_pct": 7.5,
+      "registration_centres": 2, "lat": 2.9623, "lon": 31.9420, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-07"
+    },
+    {
+      "district_id": "UGA034", "name": "Kotido", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 148000, "nid_registered": 26640,
+      "nid_coverage_pct": 18.0, "birth_registration_pct": 11.8, "death_registration_pct": 6.9, "marriage_registration_pct": 2.8,
+      "registration_centres": 2, "lat": 3.0005, "lon": 34.1321, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 6, "last_drive": "2022-11",
+      "notes": "Nomadic pastoralist communities — seasonal movement makes registration difficult"
+    },
+    {
+      "district_id": "UGA035", "name": "Kaabong", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 134000, "nid_registered": 28140,
+      "nid_coverage_pct": 21.0, "birth_registration_pct": 12.4, "death_registration_pct": 8.1, "marriage_registration_pct": 3.2,
+      "registration_centres": 2, "lat": 3.5200, "lon": 34.1400, "status": "critical",
+      "trend": "declining", "mobile_teams_needed": 5, "last_drive": "2022-09",
+      "notes": "Most remote district — security concerns affect centre operations"
+    },
+    {
+      "district_id": "UGA036", "name": "Moroto", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 121000, "nid_registered": 22990,
+      "nid_coverage_pct": 19.0, "birth_registration_pct": 11.2, "death_registration_pct": 7.2, "marriage_registration_pct": 2.9,
+      "registration_centres": 2, "lat": 2.5399, "lon": 34.6679, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 5, "last_drive": "2023-01",
+      "notes": "Regional capital of Karamoja sub-region — only 2 permanent centres for 121,000 people"
+    },
+    {
+      "district_id": "UGA037", "name": "Nakapiripirit", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 95000, "nid_registered": 15200,
+      "nid_coverage_pct": 16.0, "birth_registration_pct": 9.8, "death_registration_pct": 5.8, "marriage_registration_pct": 2.1,
+      "registration_centres": 1, "lat": 1.9847, "lon": 34.9187, "status": "critical",
+      "trend": "declining", "mobile_teams_needed": 6, "last_drive": "2022-06",
+      "notes": "Only 1 permanent centre — lowest coverage in Uganda"
+    },
+    {
+      "district_id": "UGA038", "name": "Napak", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 108000, "nid_registered": 21600,
+      "nid_coverage_pct": 20.0, "birth_registration_pct": 12.1, "death_registration_pct": 7.6, "marriage_registration_pct": 3.0,
+      "registration_centres": 2, "lat": 2.0033, "lon": 34.2398, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 5, "last_drive": "2022-12"
+    },
+    {
+      "district_id": "UGA039", "name": "Abim", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 77000, "nid_registered": 16940,
+      "nid_coverage_pct": 22.0, "birth_registration_pct": 13.6, "death_registration_pct": 8.9, "marriage_registration_pct": 3.4,
+      "registration_centres": 1, "lat": 2.7095, "lon": 33.6615, "status": "critical",
+      "trend": "improving", "mobile_teams_needed": 4, "last_drive": "2023-04"
+    },
+    {
+      "district_id": "UGA040", "name": "Amudat", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 65000, "nid_registered": 9750,
+      "nid_coverage_pct": 15.0, "birth_registration_pct": 9.1, "death_registration_pct": 5.2, "marriage_registration_pct": 1.8,
+      "registration_centres": 1, "lat": 1.9472, "lon": 34.9547, "status": "critical",
+      "trend": "declining", "mobile_teams_needed": 6, "last_drive": "2021-11",
+      "notes": "Lowest NID coverage nationally — shares border with Kenya Pokot County"
+    },
+    {
+      "district_id": "UGA041", "name": "Karenga", "region": "Karamoja", "subregion": "Karamoja",
+      "population": 53000, "nid_registered": 9010,
+      "nid_coverage_pct": 17.0, "birth_registration_pct": 10.3, "death_registration_pct": 6.1, "marriage_registration_pct": 2.3,
+      "registration_centres": 1, "lat": 3.7200, "lon": 34.2000, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 5, "last_drive": "2022-04"
+    },
+    {
+      "district_id": "UGA042", "name": "Mbarara", "region": "Western", "subregion": "Ankole",
+      "population": 635000, "nid_registered": 355600,
+      "nid_coverage_pct": 56.0, "birth_registration_pct": 52.1, "death_registration_pct": 37.8, "marriage_registration_pct": 14.9,
+      "registration_centres": 8, "lat": 0.6038, "lon": 30.6581, "status": "needs_attention",
+      "trend": "improving", "mobile_teams_needed": 1, "last_drive": "2024-07"
+    },
+    {
+      "district_id": "UGA043", "name": "Kabale", "region": "Western", "subregion": "Kigezi",
+      "population": 380000, "nid_registered": 201400,
+      "nid_coverage_pct": 53.0, "birth_registration_pct": 49.2, "death_registration_pct": 35.6, "marriage_registration_pct": 13.8,
+      "registration_centres": 6, "lat": 1.2497, "lon": 29.9903, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 1, "last_drive": "2024-06"
+    },
+    {
+      "district_id": "UGA044", "name": "Bushenyi", "region": "Western", "subregion": "Ankole",
+      "population": 330000, "nid_registered": 168300,
+      "nid_coverage_pct": 51.0, "birth_registration_pct": 47.3, "death_registration_pct": 33.9, "marriage_registration_pct": 13.2,
+      "registration_centres": 5, "lat": 0.5347, "lon": 30.1914, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-04"
+    },
+    {
+      "district_id": "UGA045", "name": "Fort Portal", "region": "Western", "subregion": "Tooro",
+      "population": 224000, "nid_registered": 109760,
+      "nid_coverage_pct": 49.0, "birth_registration_pct": 45.2, "death_registration_pct": 32.4, "marriage_registration_pct": 12.6,
+      "registration_centres": 4, "lat": 0.6714, "lon": 30.2751, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-03"
+    },
+    {
+      "district_id": "UGA046", "name": "Kasese", "region": "Western", "subregion": "Tooro",
+      "population": 747000, "nid_registered": 343620,
+      "nid_coverage_pct": 46.0, "birth_registration_pct": 42.1, "death_registration_pct": 29.8, "marriage_registration_pct": 11.4,
+      "registration_centres": 6, "lat": 0.1870, "lon": 30.0841, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-02"
+    },
+    {
+      "district_id": "UGA047", "name": "Hoima", "region": "Western", "subregion": "Bunyoro",
+      "population": 428000, "nid_registered": 188320,
+      "nid_coverage_pct": 44.0, "birth_registration_pct": 40.2, "death_registration_pct": 28.6, "marriage_registration_pct": 10.5,
+      "registration_centres": 5, "lat": 1.4305, "lon": 31.3535, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-01"
+    },
+    {
+      "district_id": "UGA048", "name": "Rukungiri", "region": "Western", "subregion": "Kigezi",
+      "population": 326000, "nid_registered": 156480,
+      "nid_coverage_pct": 48.0, "birth_registration_pct": 44.1, "death_registration_pct": 31.2, "marriage_registration_pct": 11.8,
+      "registration_centres": 4, "lat": 0.8403, "lon": 29.9398, "status": "needs_attention",
+      "trend": "improving", "mobile_teams_needed": 2, "last_drive": "2024-05"
+    },
+    {
+      "district_id": "UGA049", "name": "Ntungamo", "region": "Western", "subregion": "Ankole",
+      "population": 418000, "nid_registered": 209000,
+      "nid_coverage_pct": 50.0, "birth_registration_pct": 46.2, "death_registration_pct": 33.1, "marriage_registration_pct": 12.8,
+      "registration_centres": 5, "lat": 0.8802, "lon": 30.2649, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2024-04"
+    },
+    {
+      "district_id": "UGA050", "name": "Kanungu", "region": "Western", "subregion": "Kigezi",
+      "population": 230000, "nid_registered": 103500,
+      "nid_coverage_pct": 45.0, "birth_registration_pct": 41.2, "death_registration_pct": 29.1, "marriage_registration_pct": 10.8,
+      "registration_centres": 3, "lat": 0.9460, "lon": 29.7890, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 2, "last_drive": "2023-12"
+    },
+    {
+      "district_id": "UGA051", "name": "Kikuube", "region": "Western", "subregion": "Bunyoro",
+      "population": 248000, "nid_registered": 74400,
+      "nid_coverage_pct": 30.0, "birth_registration_pct": 25.8, "death_registration_pct": 17.4, "marriage_registration_pct": 6.5,
+      "registration_centres": 2, "lat": 1.4500, "lon": 31.0500, "status": "critical",
+      "trend": "stable", "mobile_teams_needed": 4, "last_drive": "2023-04",
+      "notes": "Hosts Kyangwali refugee settlement — over 120,000 refugees"
+    },
+    {
+      "district_id": "UGA052", "name": "Kibaale", "region": "Western", "subregion": "Bunyoro",
+      "population": 443000, "nid_registered": 181630,
+      "nid_coverage_pct": 41.0, "birth_registration_pct": 37.1, "death_registration_pct": 26.4, "marriage_registration_pct": 9.6,
+      "registration_centres": 4, "lat": 0.9148, "lon": 31.0937, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-09"
+    },
+    {
+      "district_id": "UGA053", "name": "Zombo", "region": "Northern", "subregion": "West Nile",
+      "population": 218000, "nid_registered": 76300,
+      "nid_coverage_pct": 35.0, "birth_registration_pct": 31.2, "death_registration_pct": 21.6, "marriage_registration_pct": 7.8,
+      "registration_centres": 2, "lat": 2.5044, "lon": 30.9040, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-09"
+    },
+    {
+      "district_id": "UGA054", "name": "Apac", "region": "Northern", "subregion": "Lango",
+      "population": 261000, "nid_registered": 99180,
+      "nid_coverage_pct": 38.0, "birth_registration_pct": 34.1, "death_registration_pct": 23.6, "marriage_registration_pct": 8.6,
+      "registration_centres": 3, "lat": 1.9847, "lon": 32.5360, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-10"
+    },
+    {
+      "district_id": "UGA055", "name": "Agago", "region": "Northern", "subregion": "Acholi",
+      "population": 243000, "nid_registered": 82620,
+      "nid_coverage_pct": 34.0, "birth_registration_pct": 30.1, "death_registration_pct": 20.8, "marriage_registration_pct": 7.5,
+      "registration_centres": 2, "lat": 3.2500, "lon": 33.5000, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-06"
+    },
+    {
+      "district_id": "UGA056", "name": "Lamwo", "region": "Northern", "subregion": "Acholi",
+      "population": 137000, "nid_registered": 42470,
+      "nid_coverage_pct": 31.0, "birth_registration_pct": 27.2, "death_registration_pct": 18.4, "marriage_registration_pct": 6.6,
+      "registration_centres": 2, "lat": 3.5300, "lon": 32.7800, "status": "needs_attention",
+      "trend": "declining", "mobile_teams_needed": 4, "last_drive": "2023-03"
+    },
+    {
+      "district_id": "UGA057", "name": "Nwoya", "region": "Northern", "subregion": "Acholi",
+      "population": 155000, "nid_registered": 54250,
+      "nid_coverage_pct": 35.0, "birth_registration_pct": 31.2, "death_registration_pct": 21.6, "marriage_registration_pct": 7.8,
+      "registration_centres": 2, "lat": 2.6300, "lon": 31.9200, "status": "needs_attention",
+      "trend": "stable", "mobile_teams_needed": 3, "last_drive": "2023-08"
+    }
+  ]
+}

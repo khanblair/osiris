@@ -2,50 +2,46 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Newspaper, ChevronDown, ChevronUp, ExternalLink, MapPin, Zap } from 'lucide-react';
-
-/* ═══════════════════════════════════════════════════════════════
-   OSIRIS — Intelligence Feed
-   SIGINT-style news aggregation with risk scoring
-   ═══════════════════════════════════════════════════════════════ */
+import { Newspaper, ChevronDown, ChevronUp, MapPin, AlertCircle, AlertTriangle, Info, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 
 interface IntelFeedProps {
   data: any;
   onLocate?: (lat: number, lng: number) => void;
 }
 
-function getRiskClass(score: number): string {
-  if (score >= 8) return 'risk-critical';
-  if (score >= 6) return 'risk-high';
-  if (score >= 4) return 'risk-medium';
-  return 'risk-low';
-}
+const TYPE_CFG: Record<string, { color: string; bg: string; Icon: any }> = {
+  critical: { color: '#DC2626', bg: 'bg-red-50 border-red-200',    Icon: AlertCircle },
+  warning:  { color: '#D97706', bg: 'bg-amber-50 border-amber-200', Icon: AlertTriangle },
+  info:     { color: '#1B3A6B', bg: 'bg-blue-50 border-blue-100',   Icon: Info },
+};
 
-function getRiskLabel(score: number): string {
-  if (score >= 8) return 'CRITICAL';
-  if (score >= 6) return 'HIGH';
-  if (score >= 4) return 'ELEVATED';
-  return 'LOW';
-}
-
-function timeAgo(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    const diff = Date.now() - date.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  } catch {
-    return '';
-  }
+function coverageColor(pct: number) {
+  if (pct < 20) return '#7f1d1d';
+  if (pct < 30) return '#dc2626';
+  if (pct < 40) return '#f97316';
+  if (pct < 55) return '#eab308';
+  if (pct < 70) return '#22c55e';
+  return '#15803d';
 }
 
 export default function IntelFeed({ data, onLocate }: IntelFeedProps) {
   const [expanded, setExpanded] = useState(true);
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const news = data.news || [];
+  const [tab, setTab] = useState<'alerts' | 'priorities'>('alerts');
+
+  const alerts: any[] = data.nira_alerts ?? [];
+  const districts: any[] = data.nira_districts ?? [];
+
+  // Priority score: lower coverage + larger population = higher priority
+  const priorities = [...districts]
+    .filter(d => d.status !== 'on_track')
+    .map(d => ({
+      ...d,
+      score: ((100 - d.nid_coverage_pct) * Math.log(d.population)) / Math.max(d.registration_centres, 1),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 15);
+
+  const critCount = alerts.filter(a => a.type === 'critical').length;
 
   return (
     <motion.div
@@ -61,19 +57,19 @@ export default function IntelFeed({ data, onLocate }: IntelFeedProps) {
       >
         <div className="flex items-center gap-2">
           <Newspaper className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
-          <span className="hud-text text-[12px] text-[var(--text-primary)]">SIGINT FEED</span>
-          <span className="gotham-tag gotham-tag--info" style={{ fontSize: '8px', padding: '1px 5px' }}>{news.length}</span>
-          {news.some((n: any) => n.risk_score >= 8) && (
-            <span className="gotham-tag gotham-tag--critical" style={{ fontSize: '7px', padding: '1px 4px' }}>ALERTS</span>
+          <span className="hud-text text-[12px] text-[var(--text-primary)]">NIRA INTEL</span>
+          {critCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-red-100 text-red-600 border border-red-200">
+              {critCount} CRITICAL
+            </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--alert-green)] animate-osiris-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--gold-primary)] animate-osiris-pulse" />
           {expanded ? <ChevronUp className="w-3 h-3 text-[var(--text-muted)]" /> : <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />}
         </div>
       </button>
 
-      {/* News Items */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -82,86 +78,123 @@ export default function IntelFeed({ data, onLocate }: IntelFeedProps) {
             exit={{ height: 0 }}
             className="overflow-hidden"
           >
-            <div className="max-h-[400px] overflow-y-auto styled-scrollbar divide-y divide-[var(--border-secondary)]">
-              {news.length === 0 ? (
-                <div className="px-4 py-6 text-center">
-                  <span className="text-[11px] font-mono text-[var(--text-muted)] tracking-widest">
-                    AWAITING INTELLIGENCE...
-                  </span>
-                </div>
-              ) : (
-                news.slice(0, 25).map((item: any, i: number) => (
-                  <div
-                    key={i}
-                    role="button"
-                    tabIndex={0}
-                    className="px-4 py-2.5 hover:bg-[var(--hover-accent)] transition-colors cursor-pointer"
-                    onClick={() => { if (item.link) window.open(item.link, '_blank', 'noopener,noreferrer'); else setSelectedIdx(selectedIdx === i ? null : i); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && item.link) window.open(item.link, '_blank', 'noopener,noreferrer'); }}
-                  >
-                    {/* Top row: risk badge + source + time */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[9px] font-mono font-bold tracking-widest ${getRiskClass(item.risk_score)}`}>
-                        {getRiskLabel(item.risk_score)}
-                      </span>
-                      <span className="text-[8px] font-mono text-[var(--text-muted)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded">
-                        {item.source}
-                      </span>
-                      {item.coords && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onLocate?.(item.coords[0], item.coords[1]);
-                          }}
-                          className="text-[var(--text-muted)] hover:text-[var(--cyan-primary)] transition-colors"
-                        >
-                          <MapPin className="w-2.5 h-2.5" />
-                        </button>
-                      )}
-                      <span className="text-[8px] font-mono text-[var(--text-muted)] ml-auto">
-                        {timeAgo(item.published)}
-                      </span>
+            {/* Tabs */}
+            <div className="flex border-b border-[var(--border-secondary)] px-4 gap-4">
+              {(['alerts', 'priorities'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`py-2 text-[9px] font-mono tracking-widest uppercase border-b-2 transition-colors -mb-px ${
+                    tab === t
+                      ? 'border-[var(--gold-primary)] text-[var(--gold-primary)]'
+                      : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {t === 'alerts' ? `Alerts (${alerts.length})` : `Priorities (${priorities.length})`}
+                </button>
+              ))}
+            </div>
+
+            <div className="max-h-[380px] overflow-y-auto styled-scrollbar">
+              {/* ── ALERTS TAB ── */}
+              {tab === 'alerts' && (
+                <div className="divide-y divide-[var(--border-secondary)]">
+                  {alerts.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-[11px] font-mono text-[var(--text-muted)] tracking-widest">
+                      NO ACTIVE ALERTS
                     </div>
-
-                    {/* Title */}
-                    <h4 className="text-[11px] text-[var(--text-primary)] leading-tight line-clamp-2">
-                      {item.title}
-                    </h4>
-
-                    {/* Machine Assessment (if critical) */}
-                    {item.machine_assessment && (
-                      <div className="mt-1.5 flex items-start gap-1.5 bg-red-950/20 border border-red-900/20 rounded px-2 py-1">
-                        <Zap className="w-2.5 h-2.5 text-red-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-[9px] font-mono text-red-400/80 leading-relaxed">
-                          {item.machine_assessment}
-                        </span>
+                  ) : alerts.map((alert: any, i: number) => {
+                    const cfg = TYPE_CFG[alert.type] ?? TYPE_CFG.info;
+                    const Icon = cfg.Icon;
+                    return (
+                      <div key={alert.id ?? i} className="px-4 py-3 hover:bg-[var(--hover-accent)] transition-colors">
+                        <div className="flex items-start gap-2">
+                          <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: cfg.color }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <span className="text-[10px] font-mono font-bold" style={{ color: cfg.color }}>
+                                {alert.type.toUpperCase()}
+                              </span>
+                              <span className="text-[8px] font-mono text-[var(--text-muted)]">{alert.source}</span>
+                            </div>
+                            <p className="text-[11px] text-[var(--text-primary)] leading-snug mb-1">{alert.title}</p>
+                            <p className="text-[9px] text-[var(--text-muted)] leading-relaxed mb-1">{alert.summary}</p>
+                            {alert.action && (
+                              <p className="text-[9px] font-mono font-bold" style={{ color: cfg.color }}>
+                                → {alert.action}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between mt-1.5">
+                              <span className="text-[8px] font-mono text-[var(--text-muted)]">
+                                {alert.district} · {alert.region}
+                              </span>
+                              {alert.lat && alert.lon && onLocate && (
+                                <button
+                                  onClick={() => onLocate(alert.lat, alert.lon)}
+                                  className="flex items-center gap-0.5 text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors"
+                                >
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  Locate
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    );
+                  })}
+                </div>
+              )}
 
-                    {/* Expanded details */}
-                    <AnimatePresence>
-                      {selectedIdx === i && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="mt-2 overflow-hidden"
-                        >
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-[10px] font-mono text-[var(--cyan-primary)] hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExternalLink className="w-2.5 h-2.5" />
-                            OPEN SOURCE
-                          </a>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+              {/* ── PRIORITIES TAB ── */}
+              {tab === 'priorities' && (
+                <div className="divide-y divide-[var(--border-secondary)]">
+                  <div className="px-4 py-2 bg-[var(--hover-accent)]">
+                    <p className="text-[8px] font-mono text-[var(--text-muted)] tracking-wider">
+                      RANKED BY: (100 - NID%) × log(population) ÷ centres
+                    </p>
                   </div>
-                ))
+                  {priorities.map((d: any, i: number) => {
+                    const TrendIcon = d.trend === 'improving' ? TrendingUp : d.trend === 'declining' ? TrendingDown : Minus;
+                    const trendColor = d.trend === 'improving' ? '#16A34A' : d.trend === 'declining' ? '#DC2626' : '#94A3B8';
+                    return (
+                      <div key={d.district_id} className="px-4 py-2.5 hover:bg-[var(--hover-accent)] transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] w-5 flex-shrink-0">
+                            #{i + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-[11px] font-semibold text-[var(--text-primary)] truncate">{d.name}</span>
+                              <span className="text-[10px] font-mono font-bold ml-2 flex-shrink-0" style={{ color: coverageColor(d.nid_coverage_pct) }}>
+                                {d.nid_coverage_pct}%
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[8px] font-mono text-[var(--text-muted)]">
+                                {d.region} · {(d.population / 1000).toFixed(0)}K pop · {d.registration_centres} ctrs
+                              </span>
+                              <TrendIcon className="w-3 h-3 flex-shrink-0" style={{ color: trendColor }} />
+                            </div>
+                            {d.mobile_teams_needed > 0 && (
+                              <p className="text-[8px] font-mono mt-0.5" style={{ color: '#D97706' }}>
+                                → {d.mobile_teams_needed} mobile team{d.mobile_teams_needed > 1 ? 's' : ''} needed
+                              </p>
+                            )}
+                          </div>
+                          {onLocate && (
+                            <button
+                              onClick={() => onLocate(d.lat, d.lon)}
+                              className="text-[var(--text-muted)] hover:text-[var(--gold-primary)] transition-colors flex-shrink-0"
+                            >
+                              <MapPin className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </motion.div>
