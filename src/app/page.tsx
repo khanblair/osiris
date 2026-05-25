@@ -515,7 +515,10 @@ export default function Dashboard() {
           flyToLocation={flyToLocation}
           sweepData={sweepData}
           scanTargets={scanTargets}
-          onDistrictClick={setSelectedDistrict}
+          onDistrictClick={(district) => {
+            setSelectedDistrict(district);
+            if (isMobile) setMobilePanel('recon');
+          }}
           activeRegistrationLayer={activeRegistrationLayer}
         />
       </ErrorBoundary>
@@ -561,11 +564,14 @@ export default function Dashboard() {
 
       {/* ── HEADER — NIRA-INTEL ── */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 2.5 }} className="absolute top-3 left-3 md:top-4 md:left-5 z-[200] pointer-events-none flex items-center gap-3">
-        {/* Uganda coat of arms placeholder — coloured circle badge */}
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md"
-          style={{ background: 'linear-gradient(135deg, #1B3A6B, #2557B0)', border: '2px solid rgba(27,58,107,0.3)' }}>
-          <span className="text-white font-bold text-[10px] md:text-xs">UG</span>
-        </div>
+        {/* NIRA logo */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.jpg"
+          alt="NIRA Uganda"
+          className="w-8 h-8 md:w-10 md:h-10 rounded-full flex-shrink-0 shadow-md object-cover"
+          style={{ border: '2px solid rgba(27,58,107,0.3)' }}
+        />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <h1 className="text-sm md:text-base font-bold tracking-[0.25em] text-[var(--text-heading)] font-mono">NIRA-INTEL</h1>
