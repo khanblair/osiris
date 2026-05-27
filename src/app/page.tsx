@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, BarChart3, Newspaper, Search, X, Globe, MapPinned, Radar, Satellite, Moon, ExternalLink, AlertTriangle, Activity, Users, CreditCard } from 'lucide-react';
+import { Layers, BarChart3, Newspaper, Search, X, Globe, MapPinned, Radar, Satellite, Moon, AlertTriangle, Activity, Users, CreditCard } from 'lucide-react';
 import DistrictIntelPanel from '@/components/DistrictIntelPanel';
 import IntelFeed from '@/components/IntelFeed';
 import SearchBar from '@/components/SearchBar';
@@ -17,7 +17,6 @@ import LiveAlerts from '@/components/LiveAlerts';
 
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
 const LayerPanel = dynamic(() => import('@/components/LayerPanel'));
-const CameraViewer = dynamic(() => import('@/components/CameraViewer'));
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -65,7 +64,6 @@ export default function Dashboard() {
   const [regionDossier, setRegionDossier] = useState<any>(null);
   const [dossierLoading, setDossierLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [activeCamera, setActiveCamera] = useState<any>(null);
   const [spaceWeather, setSpaceWeather] = useState<any>(null);
   const [showLayers, setShowLayers] = useState(true);
   const [showMarkets, setShowMarkets] = useState(true);
@@ -102,9 +100,6 @@ export default function Dashboard() {
     radiation: false, infrastructure: false,
     global_incidents: false, war_alerts: false, gps_jamming: false, day_night: false,
   });
-  const [liveFeedUrl, setLiveFeedUrl] = useState<string | null>(null);
-  const [liveFeedName, setLiveFeedName] = useState('');
-  const [liveFeedEmbedAllowed, setLiveFeedEmbedAllowed] = useState(true);
 
   // Splash screen
   useEffect(() => {
@@ -205,15 +200,8 @@ export default function Dashboard() {
     } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); } finally { setDossierLoading(false); }
   }, []);
 
-  // Entity click handler (hoisted from JSX to comply with Rules of Hooks — Fixes #113)
-  const handleEntityClick = useCallback((entity: any) => {
-    if (entity?.type === 'cctv') setActiveCamera(entity);
-    if (entity?.type === 'live_news' && entity.url) {
-      setLiveFeedUrl(entity.url);
-      setLiveFeedName(entity.name);
-      setLiveFeedEmbedAllowed(entity.embed_allowed !== false);
-    }
-  }, []);
+  // Entity click handler — kept for OsirisMap compatibility (no-op in NIRA-INTEL)
+  const handleEntityClick = useCallback((_entity: any) => { /* unused in NIRA-INTEL */ }, []);
 
   // ── SHARED FETCH UTILITY (Fixes #107 — single definition, not 3 copies) ──
   const fetchEndpoint = useCallback(async (url: string, transform?: (d: any) => any, options?: RequestInit) => {
@@ -686,109 +674,8 @@ export default function Dashboard() {
         />
 
         {/* NIRA Live Alerts */}
-        <LiveAlerts data={data} onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} onWatchFeed={(url, name) => { setLiveFeedUrl(url); setLiveFeedName(name); }} />
+        <LiveAlerts data={data} onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} />
       </div>
-
-      {/* ── LIVE FEED VIEWER OVERLAY ── */}
-      <AnimatePresence>
-        {liveFeedUrl && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 z-[500] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-            onClick={() => setLiveFeedUrl(null)}
-          >
-            <motion.div
-              initial={{ y: 20 }}
-              animate={{ y: 0 }}
-              className="w-[90vw] max-w-[900px] flex flex-col relative rounded-xl overflow-hidden border border-[var(--border-primary)] shadow-2xl bg-black"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#111] border-b border-[var(--border-primary)]">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#FF4081] animate-osiris-pulse" />
-                  <span className="text-[12px] font-mono font-bold text-white tracking-wider">{liveFeedName}</span>
-                  <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-mono text-[9px] font-bold">LIVE STREAM</span>
-                  {!liveFeedEmbedAllowed && (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono text-[9px]">EXTERNAL ONLY</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <a
-                    href={
-                      liveFeedUrl.includes('channel=')
-                        ? `https://www.youtube.com/channel/${liveFeedUrl.split('channel=')[1].split('&')[0]}/live`
-                        : liveFeedUrl.includes('/embed/')
-                        ? `https://www.youtube.com/watch?v=${liveFeedUrl.split('/embed/')[1].split('?')[0]}`
-                        : liveFeedUrl
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[var(--border-primary)] hover:bg-[var(--gold-primary)] hover:text-black text-white transition-colors text-[11px] font-mono"
-                  >
-                    <span>Open in YouTube</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                  <button onClick={() => setLiveFeedUrl(null)} className="text-white/70 hover:text-white transition-colors p-1">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Body — iframe or external card */}
-              {liveFeedEmbedAllowed ? (
-                <div className="w-full aspect-video relative bg-black">
-                  <iframe
-                    src={liveFeedUrl}
-                    className="w-full h-full absolute inset-0"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <div className="w-full aspect-video flex items-center justify-center bg-black/95">
-                  <div className="text-center px-8">
-                    <div className="w-14 h-14 rounded-full bg-[#39FF14]/10 border border-[#39FF14]/20 flex items-center justify-center mx-auto mb-4">
-                      <ExternalLink className="w-6 h-6 text-[#39FF14]" />
-                    </div>
-                    <p className="text-[13px] font-mono font-bold text-white tracking-widest mb-2">EMBED RESTRICTED</p>
-                    <p className="text-[11px] font-mono text-white/50 mb-6 max-w-xs">
-                      {liveFeedName} does not allow third-party embedding. Click below to open the live stream directly.
-                    </p>
-                    <a
-                      href={
-                        liveFeedUrl.includes('channel=')
-                          ? `https://www.youtube.com/channel/${liveFeedUrl.split('channel=')[1].split('&')[0]}/live`
-                          : liveFeedUrl.includes('/embed/')
-                          ? `https://www.youtube.com/watch?v=${liveFeedUrl.split('/embed/')[1].split('?')[0]}`
-                          : liveFeedUrl
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded border border-[#39FF14]/40 text-[#39FF14] font-mono text-[12px] hover:bg-[#39FF14]/10 transition-colors tracking-wider"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      OPEN LIVE STREAM
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* Footer — only show for embeddable feeds */}
-              {liveFeedEmbedAllowed && (
-                <div className="bg-[#111]/90 px-4 py-2.5 border-t border-[var(--border-primary)] flex items-center gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-[var(--gold-primary)] shrink-0" />
-                  <span className="text-[11px] font-mono text-white/70 leading-relaxed">
-                    If you see &ldquo;Video unavailable&rdquo;, use <strong className="text-[var(--gold-primary)]">Open in YouTube</strong> above.
-                  </span>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ═══ MOBILE UI ═══ */}
       {isMobile && (
@@ -987,13 +874,6 @@ export default function Dashboard() {
           </div>
         </motion.div>
       )}
-
-      {/* ── Camera Viewer ── */}
-      <CameraViewer
-        camera={activeCamera}
-        onClose={() => setActiveCamera(null)}
-        onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })}
-      />
 
       {/* ── OVERLAYS ── */}
       <div className="vignette absolute inset-0 pointer-events-none z-[2]" />

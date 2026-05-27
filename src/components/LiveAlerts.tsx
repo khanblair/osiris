@@ -10,7 +10,6 @@ import {
 interface LiveAlertsProps {
   data: any;
   onLocate: (lat: number, lng: number) => void;
-  onWatchFeed?: (url: string, name: string) => void;
 }
 
 const TYPE_CONFIG: Record<string, { color: string; Icon: any; label: string }> = {
