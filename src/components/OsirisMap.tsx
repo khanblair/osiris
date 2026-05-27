@@ -1275,28 +1275,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
   useEffect(() => {
     if (!mapReady) return;
-    // ── CONFLICT ZONES — center-point warning markers ──
-    const CONFLICT_ZONES = [
-      { label: 'UKRAINE WAR', severity: 'war', lat: 48.5, lng: 31.2 },
-      { label: 'GAZA CONFLICT', severity: 'war', lat: 31.35, lng: 34.35 },
-      { label: 'LEBANON BORDER', severity: 'high', lat: 33.4, lng: 35.8 },
-      { label: 'SUDAN CIVIL WAR', severity: 'war', lat: 15.0, lng: 30.0 },
-      { label: 'MYANMAR CONFLICT', severity: 'war', lat: 19.5, lng: 96.5 },
-      { label: 'DRC EASTERN CONFLICT', severity: 'war', lat: -1.0, lng: 28.5 },
-      { label: 'YEMEN WAR', severity: 'war', lat: 15.5, lng: 48.0 },
-      { label: 'SYRIA', severity: 'high', lat: 35.0, lng: 38.5 },
-      { label: 'TAIWAN STRAIT', severity: 'elevated', lat: 24.0, lng: 119.5 },
-      { label: 'KOREAN DMZ', severity: 'elevated', lat: 38.3, lng: 127.0 },
-      { label: 'SAHEL INSTABILITY', severity: 'high', lat: 14.0, lng: 5.0 },
-      { label: 'SOMALIA', severity: 'high', lat: 5.0, lng: 46.0 },
-      { label: 'RED SEA THREAT', severity: 'high', lat: 16.0, lng: 40.0 },
-    ];
-    const conflictFeatures = CONFLICT_ZONES.map(z => ({
-      type: 'Feature' as const,
-      geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
-      properties: { label: z.label, severity: z.severity },
-    }));
-    setGeo('conflict-zones', conflictFeatures);
+    // NIRA-INTEL: conflict zone markers removed — not relevant to civil registration dashboard
+    setGeo('conflict-zones', []);
   }, [mapReady, setGeo]);
 
 
@@ -1321,7 +1301,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     setVis(['ship-dots','ship-label'], activeLayers.maritime);
     setVis(['news-glow','news-dots','news-label'], activeLayers.live_news);
     setVis(['sigint-news-glow','sigint-news-dots','sigint-news-label'], activeLayers.news_intel);
-    setVis(['conflict-icons'], activeLayers.conflict_zones !== false);
+    setVis(['conflict-icons'], false); // NIRA-INTEL: conflict zones not displayed
 
     setVis(['balloon-dots','balloon-label'], activeLayers.balloons);
     setVis(['rad-glow','rad-dots','rad-label'], activeLayers.radiation);

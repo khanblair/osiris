@@ -258,7 +258,6 @@ export default function Dashboard() {
     };
 
     loadRegistration('nid');
-    fetchEndpoint('/api/news');
 
     const alertTimer = setTimeout(() => fetchEndpoint('/api/alerts-nira', d => ({ nira_alerts: d.alerts })), 1000);
 
